@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Poppins", sans-serif;
+  --font-sans: "Inter", sans-serif;
+
+  /* warm, light, consumer-travel palette (MMT / Airbnb energy) */
+  --color-page: #ffffff;
+  --color-page-soft: #f7f7fb;
+  --color-surface: #ffffff;
+  --color-surface-sunk: #f4f4f8;
+  --color-border: #ececf1;
+  --color-border-strong: #e0e0e8;
+
+  --color-ink: #1f1b2e;
+  --color-ink-dim: #6b7280;
+  --color-ink-faint: #9ca3af;
+
+  --color-coral: #ff5a5f;
+  --color-coral-dim: #fff0ef;
+  --color-teal: #00a699;
+  --color-teal-dim: #e5f8f6;
+  --color-amber: #ffb400;
+  --color-amber-dim: #fff6e0;
+  --color-pink: #e31c5f;
+  --color-pink-dim: #fde8ee;
+  --color-blue: #2563eb;
+  --color-blue-dim: #eaf1ff;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-page-soft);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-coral-dim);
+  color: var(--color-ink);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

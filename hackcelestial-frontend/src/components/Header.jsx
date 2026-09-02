@@ -268,20 +268,20 @@ export default function Header({
               {/* Status Badges */}
               <div className="flex items-center gap-2 flex-wrap">
                 {disruptedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-slate-900 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-pink animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-slate-900 text-white border border-white/10 shadow-sm">
+                    <span className="h-2 w-2 rounded-full bg-pink shadow-[0_0_10px_var(--color-pink)] animate-pulse" />
                     {disruptedCount} Disrupted
                   </span>
                 )}
                 {atRiskCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-slate-900 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-amber" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-slate-900 text-white border border-white/10 shadow-sm">
+                    <span className="h-2 w-2 rounded-full bg-amber shadow-[0_0_10px_var(--color-amber)]" />
                     {atRiskCount} At Risk
                   </span>
                 )}
                 {disruptedCount === 0 && atRiskCount === 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-slate-900 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-teal shadow-[0_0_12px_rgba(13,148,136,0.8)] animate-[pulse_2s_ease-in-out_infinite]" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-slate-900 text-white border border-white/10 shadow-sm">
+                    <span className="h-2 w-2 rounded-full bg-teal shadow-[0_0_12px_rgba(13,148,136,1)] animate-[pulse_2s_ease-in-out_infinite]" />
                     Itinerary Optimal
                   </span>
                 )}

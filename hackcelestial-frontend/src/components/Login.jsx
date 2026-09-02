@@ -10,6 +10,7 @@ export default function Login({ onLogin }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({ email: false, password: false });
   const [showEarlyAccess, setShowEarlyAccess] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
@@ -71,7 +72,7 @@ export default function Login({ onLogin }) {
     setIsSubmitting(true);
     // Simulate auth delay for a premium feel
     setTimeout(() => {
-      onLogin();
+      onLogin(rememberMe);
     }, 1200);
   };
 
@@ -177,7 +178,12 @@ export default function Login({ onLogin }) {
 
           <div className="flex items-center justify-between text-xs px-1 py-1">
             <label className="flex items-center gap-2 cursor-pointer group">
-              <input type="checkbox" className="w-4 h-4 rounded border-border-strong bg-surface-sunk checked:bg-coral checked:border-coral focus:ring-coral/20 cursor-pointer" />
+              <input 
+                type="checkbox" 
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-border-strong bg-surface-sunk checked:bg-coral checked:border-coral focus:ring-coral/20 cursor-pointer" 
+              />
               <span className="text-ink-dim group-hover:text-ink transition-colors">Remember me</span>
             </label>
             <a href="#" className="text-coral hover:text-coral-dim font-medium transition-colors">

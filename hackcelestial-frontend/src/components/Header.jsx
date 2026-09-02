@@ -269,7 +269,7 @@ export default function Header({
                 )}
                 {disruptedCount === 0 && atRiskCount === 0 && (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-slate-900 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-teal" />
+                    <span className="h-2 w-2 rounded-full bg-teal shadow-[0_0_8px_var(--color-teal)]" />
                     Itinerary Optimal
                   </span>
                 )}

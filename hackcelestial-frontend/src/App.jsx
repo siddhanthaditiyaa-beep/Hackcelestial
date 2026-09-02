@@ -42,7 +42,9 @@ export default function App() {
   } = useItineraryEngine();
 
   const [selectedBookingId, setSelectedBookingId] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem("recoup_auth") === "true" || sessionStorage.getItem("recoup_auth") === "true";
+  });
 
   useEffect(() => {
     if (trip && trip.bookings && trip.bookings.length > 0) {
@@ -70,7 +72,18 @@ export default function App() {
   }, [activeDisruption, disruptionTypes]);
 
   if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+    return (
+      <Login 
+        onLogin={(remember) => {
+          setIsAuthenticated(true);
+          if (remember) {
+            localStorage.setItem("recoup_auth", "true");
+          } else {
+            sessionStorage.setItem("recoup_auth", "true");
+          }
+        }} 
+      />
+    );
   }
 
   if (loading || !trip) {

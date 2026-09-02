@@ -65,7 +65,7 @@ export default function BookingNode({
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
             <div className="absolute top-3 left-3 h-9 w-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
-              <Icon className="h-4.5 w-4.5 text-ink" strokeWidth={2} />
+              <Icon className="h-4.5 w-4.5 text-slate-900" strokeWidth={2} />
             </div>
 
             <div className="absolute top-3 right-3 flex items-center gap-1.5">

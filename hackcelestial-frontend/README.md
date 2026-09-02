@@ -6,6 +6,10 @@ Represents a traveler's itinerary as a connected Directed Acyclic Graph (DAG), v
 
 Wired to the Express backend in `../hackcelestial-backend`.
 
+## Live Deployment Links
+- **Web App (Vercel)**: [https://hackcelestial-seven.vercel.app/](https://hackcelestial-seven.vercel.app/)
+- **Backend API (Render)**: [https://hackcelestial-svqi.onrender.com/api](https://hackcelestial-svqi.onrender.com/api)
+
 ---
 
 ## Running It

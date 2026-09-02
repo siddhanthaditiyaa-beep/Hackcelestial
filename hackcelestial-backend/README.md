@@ -4,6 +4,10 @@ Express backend for **PS-2: Travel Disruption Recovery Engine — Intelligent Tr
 
 Models travel itineraries as Temporal Dependency Directed Acyclic Graphs (DAGs), simulates cascading ripple effects, computes financial exposure & policy-based refunds, and executes multi-criteria recovery optimization tailored to traveler preferences.
 
+## Live Deployment Links
+- **Backend API (Render)**: [https://hackcelestial-svqi.onrender.com/api](https://hackcelestial-svqi.onrender.com/api)
+- **Frontend App (Vercel)**: [https://hackcelestial-seven.vercel.app/](https://hackcelestial-seven.vercel.app/)
+
 ---
 
 ## Quick Start

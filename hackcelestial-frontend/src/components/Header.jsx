@@ -134,12 +134,12 @@ export default function Header({
                               setIsTripDropdownOpen(false);
                             }}
                             className={`block w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/10 ${
-                              activeTripId === t.id ? "text-coral font-bold bg-white/5" : "text-ink font-medium"
+                              activeTripId === t.id ? "text-teal font-bold bg-white/10" : "text-ink font-medium"
                             }`}
                           >
                             <div className="flex items-center gap-2">
                               {activeTripId === t.id ? (
-                                <span className="h-1.5 w-1.5 rounded-full bg-coral shrink-0 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-teal shrink-0 shadow-[0_0_8px_var(--color-teal)]" />
                               ) : (
                                 <span className="h-1.5 w-1.5 rounded-full bg-transparent shrink-0" />
                               )}
@@ -256,19 +256,19 @@ export default function Header({
               {/* Status Badges */}
               <div className="flex items-center gap-2 flex-wrap">
                 {disruptedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-pink shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-slate-900 shadow-sm">
                     <span className="h-2 w-2 rounded-full bg-pink animate-pulse" />
                     {disruptedCount} Disrupted
                   </span>
                 )}
                 {atRiskCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-amber shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-slate-900 shadow-sm">
                     <span className="h-2 w-2 rounded-full bg-amber" />
                     {atRiskCount} At Risk
                   </span>
                 )}
                 {disruptedCount === 0 && atRiskCount === 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-teal shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-white text-slate-900 shadow-sm">
                     <span className="h-2 w-2 rounded-full bg-teal" />
                     Itinerary Optimal
                   </span>

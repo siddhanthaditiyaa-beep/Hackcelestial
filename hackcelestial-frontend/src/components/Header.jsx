@@ -26,6 +26,7 @@ export default function Header({
   onOpenCopilot,
 }) {
   const [isDark, setIsDark] = useState(true);
+  const [isTripDropdownOpen, setIsTripDropdownOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -101,18 +102,55 @@ export default function Header({
             {/* Trip Switcher Dropdown */}
             {allTrips.length > 1 && (
               <div className="relative">
-                <select
-                  value={activeTripId}
-                  onChange={(e) => onSwitchTrip?.(e.target.value)}
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-medium text-xs rounded-full px-3.5 py-2 pr-8 appearance-none cursor-pointer border border-white/20 focus:outline-none"
+                <button
+                  onClick={() => setIsTripDropdownOpen(!isTripDropdownOpen)}
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-medium text-xs rounded-full px-3.5 py-2 pr-8 appearance-none cursor-pointer border border-white/20 focus:outline-none inline-flex items-center transition-colors"
                 >
-                  {allTrips.map((t) => (
-                    <option key={t.id} value={t.id} className="text-ink bg-page">
-                      {t.tripName}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="h-3.5 w-3.5 text-white/80 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <span className="truncate max-w-[200px]">
+                    {allTrips.find((t) => t.id === activeTripId)?.tripName || "Select Trip"}
+                  </span>
+                  <ChevronDown className={`h-3.5 w-3.5 text-white/80 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-transform ${isTripDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isTripDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsTripDropdownOpen(false)}
+                    />
+                    
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="absolute left-0 mt-2 w-max min-w-[240px] z-50 glass-panel border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-page/90 backdrop-blur-2xl"
+                    >
+                      <div className="py-1">
+                        {allTrips.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => {
+                              onSwitchTrip?.(t.id);
+                              setIsTripDropdownOpen(false);
+                            }}
+                            className={`block w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/10 ${
+                              activeTripId === t.id ? "text-coral font-bold bg-white/5" : "text-ink font-medium"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              {activeTripId === t.id ? (
+                                <span className="h-1.5 w-1.5 rounded-full bg-coral shrink-0 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                              ) : (
+                                <span className="h-1.5 w-1.5 rounded-full bg-transparent shrink-0" />
+                              )}
+                              <span className="truncate">{t.tripName}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
               </div>
             )}
 
@@ -184,7 +222,7 @@ export default function Header({
                   onClick={() => onSwitchView?.("rail")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                     activeView === "rail"
-                      ? "bg-white text-ink shadow-sm"
+                      ? "bg-white text-slate-900 shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -195,7 +233,7 @@ export default function Header({
                   onClick={() => onSwitchView?.("graph")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                     activeView === "graph"
-                      ? "bg-white text-ink shadow-sm"
+                      ? "bg-white text-slate-900 shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -206,7 +244,7 @@ export default function Header({
                   onClick={() => onSwitchView?.("radar")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                     activeView === "radar"
-                      ? "bg-white text-ink shadow-sm"
+                      ? "bg-white text-slate-900 shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >

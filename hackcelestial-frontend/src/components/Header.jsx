@@ -11,7 +11,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { HERO_IMAGE } from "../utils/bookingImages";
+import { HERO_IMAGE, getTripHeroImage } from "../utils/bookingImages";
 
 export default function Header({
   trip,
@@ -58,8 +58,8 @@ export default function Header({
   return (
     <header className="relative overflow-hidden">
       <motion.div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${HERO_IMAGE})` }}
+        className="absolute inset-0 bg-cover bg-center transition-all duration-1000"
+        style={{ backgroundImage: `url(${getTripHeroImage(trip?.id)})` }}
         animate={{ scale: [1, 1.06, 1] }}
         transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
       />

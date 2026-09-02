@@ -32,8 +32,18 @@ export const TYPE_FALLBACK_IMAGE = {
   activity: "https://images.unsplash.com/photo-1520308194076-a925e6d8fac8?w=800&q=80&auto=format&fit=crop",
 };
 
+export const TRIP_HERO_IMAGE = {
+  trip_001: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=1600&q=80&auto=format&fit=crop", // Bali landscape
+  trip_002: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=1600&q=80&auto=format&fit=crop", // Kyoto / Japan
+  trip_003: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1600&q=80&auto=format&fit=crop", // Paris / Europe
+};
+
 export const HERO_IMAGE =
   "https://images.unsplash.com/photo-1557093793-d149a38a1be8?w=1600&q=80&auto=format&fit=crop";
+
+export function getTripHeroImage(tripId) {
+  return TRIP_HERO_IMAGE[tripId] || HERO_IMAGE;
+}
 
 export function getBookingImage(booking) {
   if (booking?.id && BOOKING_IMAGE[booking.id]) {

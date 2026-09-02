@@ -17,11 +17,13 @@ Modern travel involves tightly interconnected bookings (flights, transfers, hote
 Recoup acts as an **autonomous incident copilot**. It automatically maps a traveler's itinerary into a dependency graph, actively monitors connection buffers, and steps in the moment a disruption occurs. 
 
 ### Key Features
-✨ **Jaw-Dropping Glassmorphic UI**: A premium, futuristic, and responsive Dark Mode interface designed for high-stress situations. Features interactive glowing nodes, dynamic topology graphs, and smooth micro-animations.
+✨ **Jaw-Dropping Glassmorphic UI**: A premium, futuristic, and responsive interface designed for high-stress situations. Features interactive glowing nodes, dynamic topology graphs, smooth micro-animations, and automatic Light/Dark mode.
+🔐 **Immersive Authentication Portal**: State-of-the-art secure login flow with keyboard navigation, smart validation, "Continue with Google" integration, and an exclusive Early Access request system.
+🖼️ **Dynamic Destination Backgrounds**: The dashboard intelligently adapts its immersive hero imagery based on the active itinerary's destination (e.g., Bali, Kyoto, Paris) for a highly personalized feel.
 🧠 **Gemini AI Integration**: Uses Google's **Gemini 2.5 Flash** to instantly generate creative, preference-tailored recovery plans (Budget, Speed, Comfort, Balanced).
-📊 **Graph-based Cascade Detection**: Employs Breadth-First Search (BFS) to instantly identify downstream dependencies that will break due to a delay.
+⚡ **Graph-based Cascade Detection**: Employs Breadth-First Search (BFS) to instantly identify downstream dependencies that will break due to a delay.
 🛡️ **Proactive Risk Radar**: Identifies thin connection buffers *before* they break.
-🤖 **Automated Incident Briefs**: The AI synthesizes executive summaries and automatically drafts professional notifications for impacted vendors (e.g., late check-in emails for hotels).
+✉️ **Automated Incident Briefs**: The AI synthesizes executive summaries and automatically drafts professional notifications for impacted vendors (e.g., late check-in emails for hotels).
 
 ## 🛠️ Tech Stack
 - **Frontend**: React, Vite, Custom CSS (Glassmorphism design system)

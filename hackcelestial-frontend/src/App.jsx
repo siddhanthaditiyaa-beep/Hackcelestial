@@ -7,6 +7,7 @@ import DisruptionConsole from "./components/DisruptionConsole";
 import ImpactPanel from "./components/ImpactPanel";
 import RecoveryList from "./components/RecoveryList";
 import ConciergeCopilotModal from "./components/ConciergeCopilotModal";
+import Login from "./components/Login";
 import { useItineraryEngine } from "./hooks/useItineraryEngine";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
@@ -41,6 +42,7 @@ export default function App() {
   } = useItineraryEngine();
 
   const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     if (trip && trip.bookings && trip.bookings.length > 0) {
@@ -66,6 +68,10 @@ export default function App() {
     if (!activeDisruption) return null;
     return disruptionTypes.find((t) => t.id === activeDisruption.type);
   }, [activeDisruption, disruptionTypes]);
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
 
   if (loading || !trip) {
     return (

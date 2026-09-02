@@ -4,28 +4,77 @@
   --font-display: "Poppins", sans-serif;
   --font-sans: "Inter", sans-serif;
 
-  /* Sleek Dark Mode / Glassmorphism palette */
-  --color-page: #0b0f19;
-  --color-page-soft: #121827;
-  --color-surface: rgba(255, 255, 255, 0.03);
-  --color-surface-sunk: rgba(0, 0, 0, 0.25);
-  --color-border: rgba(255, 255, 255, 0.08);
-  --color-border-strong: rgba(255, 255, 255, 0.15);
+  --color-page: var(--page);
+  --color-page-soft: var(--page-soft);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
 
-  --color-ink: #f8fafc;
-  --color-ink-dim: #94a3b8;
-  --color-ink-faint: #475569;
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-faint: var(--ink-faint);
 
-  --color-coral: #ff4f5e;
-  --color-coral-dim: rgba(255, 79, 94, 0.15);
-  --color-teal: #00f0ff;
-  --color-teal-dim: rgba(0, 240, 255, 0.15);
-  --color-amber: #ffb400;
-  --color-amber-dim: rgba(255, 180, 0, 0.15);
-  --color-pink: #e31c5f;
-  --color-pink-dim: rgba(227, 28, 95, 0.15);
-  --color-blue: #3b82f6;
-  --color-blue-dim: rgba(59, 130, 246, 0.15);
+  --color-coral: var(--coral);
+  --color-coral-dim: var(--coral-dim);
+  --color-teal: var(--teal);
+  --color-teal-dim: var(--teal-dim);
+  --color-amber: var(--amber);
+  --color-amber-dim: var(--amber-dim);
+  --color-pink: var(--pink);
+  --color-pink-dim: var(--pink-dim);
+  --color-blue: var(--blue);
+  --color-blue-dim: var(--blue-dim);
+}
+
+:root {
+  /* LIGHT MODE VARIABLES */
+  --page: #f0f4f8;
+  --page-soft: #e2e8f0;
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-sunk: rgba(0, 0, 0, 0.05);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+
+  --ink: #0f172a;
+  --ink-dim: #475569;
+  --ink-faint: #94a3b8;
+
+  --coral: #ef4444;
+  --coral-dim: rgba(239, 68, 68, 0.15);
+  --teal: #0d9488;
+  --teal-dim: rgba(13, 148, 136, 0.15);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245, 158, 11, 0.15);
+  --pink: #db2777;
+  --pink-dim: rgba(219, 39, 119, 0.15);
+  --blue: #2563eb;
+  --blue-dim: rgba(37, 99, 235, 0.15);
+}
+
+.dark {
+  /* DARK MODE VARIABLES (From Original) */
+  --page: #0b0f19;
+  --page-soft: #121827;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-sunk: rgba(0, 0, 0, 0.25);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --ink: #f8fafc;
+  --ink-dim: #94a3b8;
+  --ink-faint: #475569;
+
+  --coral: #ff4f5e;
+  --coral-dim: rgba(255, 79, 94, 0.15);
+  --teal: #00f0ff;
+  --teal-dim: rgba(0, 240, 255, 0.15);
+  --amber: #ffb400;
+  --amber-dim: rgba(255, 180, 0, 0.15);
+  --pink: #e31c5f;
+  --pink-dim: rgba(227, 28, 95, 0.15);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59, 130, 246, 0.15);
 }
 
 html, body, #root {
@@ -34,12 +83,10 @@ html, body, #root {
 
 body {
   background-color: var(--color-page);
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.04), transparent 50%),
-    radial-gradient(circle at 85% 30%, rgba(255, 79, 94, 0.04), transparent 50%);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 /* Base Glass panel utility */
@@ -49,6 +96,7 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--color-border);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.4s ease, border-color 0.4s ease;
 }
 
 ::selection {

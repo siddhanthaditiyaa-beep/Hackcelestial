@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   RotateCcw,
@@ -7,6 +8,8 @@ import {
   Calendar,
   Radar,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { HERO_IMAGE } from "../utils/bookingImages";
 
@@ -22,6 +25,31 @@ export default function Header({
   onReset,
   onOpenCopilot,
 }) {
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light") {
+      setIsDark(false);
+      document.documentElement.classList.remove("dark");
+    } else {
+      setIsDark(true);
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDark) {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+      setIsDark(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDark(true);
+    }
+  };
+
   const total = trip?.bookings?.length ?? 0;
   const onTrack = trip
     ? trip.bookings.filter((b) => b.status === "confirmed" || b.status === "resolved").length
@@ -79,7 +107,7 @@ export default function Header({
                   className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-medium text-xs rounded-full px-3.5 py-2 pr-8 appearance-none cursor-pointer border border-white/20 focus:outline-none"
                 >
                   {allTrips.map((t) => (
-                    <option key={t.id} value={t.id} className="text-ink bg-surface">
+                    <option key={t.id} value={t.id} className="text-ink bg-page">
                       {t.tripName}
                     </option>
                   ))}
@@ -95,6 +123,15 @@ export default function Header({
             >
               <Sparkles className="h-3.5 w-3.5 text-amber-200" />
               AI Copilot
+            </button>
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur text-white transition cursor-pointer"
+              title="Toggle Theme"
+            >
+              {isDark ? <Sun className="h-4 w-4 text-amber-200" /> : <Moon className="h-4 w-4 text-white" />}
             </button>
 
             {/* Reset Button */}

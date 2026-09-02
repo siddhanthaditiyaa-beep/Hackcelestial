@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Sun,
   Moon,
+  LogOut,
 } from "lucide-react";
 import { HERO_IMAGE, getTripHeroImage } from "../utils/bookingImages";
 
@@ -24,6 +25,7 @@ export default function Header({
   disruptedCount,
   onReset,
   onOpenCopilot,
+  onLogout,
 }) {
   const [isDark, setIsDark] = useState(true);
   const [isTripDropdownOpen, setIsTripDropdownOpen] = useState(false);
@@ -179,6 +181,16 @@ export default function Header({
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Reset
+            </button>
+
+            {/* Logout Button */}
+            <button
+              onClick={onLogout}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full bg-white/15 hover:bg-pink-dim backdrop-blur text-white transition-colors cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>

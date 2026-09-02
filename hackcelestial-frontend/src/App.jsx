@@ -112,6 +112,11 @@ export default function App() {
         disruptedCount={disruptedCount}
         onReset={reset}
         onOpenCopilot={() => setIsCopilotOpen(true)}
+        onLogout={() => {
+          setIsAuthenticated(false);
+          localStorage.removeItem("recoup_auth");
+          sessionStorage.removeItem("recoup_auth");
+        }}
       />
 
       <main className="max-w-[1240px] mx-auto px-4 md:px-8 -mt-6 pb-12">

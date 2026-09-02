@@ -1,58 +1,49 @@
-# Recoup — API (Person B / backend)
+# Recoup — Intelligent Travel Resilience API
 
-Express backend for **PS-2: Travel Disruption Recovery Engine** (Hackcelestial).
-Implements the exact contract the frontend (`hackcelestial-frontend/`) expects —
-this is a drop-in replacement for its original in-memory mock, already wired
-and tested end-to-end.
+Express backend for **PS-2: Travel Disruption Recovery Engine — Intelligent Travel Resilience** (Hackcelestial).
 
-## Running it
+Models travel itineraries as Temporal Dependency Directed Acyclic Graphs (DAGs), simulates cascading ripple effects, computes financial exposure & policy-based refunds, and executes multi-criteria recovery optimization tailored to traveler preferences.
+
+---
+
+## Quick Start
 
 ```bash
 npm install
-cp .env.example .env
-npm run dev     # nodemon, http://localhost:8080
-npm start       # plain node
+npm test          # Runs full 9-point integration test suite
+npm run dev       # nodemon live reload, http://localhost:8080
+npm start         # production node server
 ```
 
-## Endpoints
+---
 
-| Method | Path | Body | Returns |
+## API Endpoints
+
+| Method | Path | Body | Description |
 |---|---|---|---|
-| GET | `/api/health` | — | `{ ok: true }` |
-| GET | `/api/itinerary/:id` | — | trip + bookings |
-| GET | `/api/itinerary/:id/at-risk` | — | `bookingId[]` with a tight connection |
-| GET | `/api/disruption-types` | — | the 3 supported disruption scenarios |
-| POST | `/api/disrupt` | `{ tripId, bookingId, type }` | disruption + impact + ranked recovery options |
-| POST | `/api/select-recovery` | `{ tripId, bookingId, downstreamIds, planId }` | applies the plan, resolves affected bookings |
-| POST | `/api/itinerary/:id/reset` | — | resets the demo trip back to its seed state |
+| `GET` | `/api/health` | — | Health check (`{ ok: true }`) |
+| `GET` | `/api/trips` | — | Lists all available multi-modal demo trips |
+| `GET` | `/api/itinerary/:id` | — | Returns trip metadata + connected bookings |
+| `GET` | `/api/itinerary/:id/at-risk` | — | Proactively flags bookings with tight buffers (<60m) |
+| `POST` | `/api/itinerary/:id/simulate-delay` | `{ bookingId, delayMinutes }` | What-If buffer sensitivity curve calculator |
+| `GET` | `/api/disruption-types` | — | Returns all 7 PS-2 compliant disruption scenarios |
+| `POST` | `/api/disrupt` | `{ tripId, bookingId, type, delayMinutes, travelerPreference }` | Calculates DAG cascade, financial exposure, AI brief, and ranked recovery options |
+| `POST` | `/api/select-recovery` | `{ tripId, disruptionId, bookingId, downstreamIds, planId }` | Reconstitutes itinerary, reschedules times, applies diffs, and computes refund ledger |
+| `POST` | `/api/itinerary/:id/reset` | — | Resets trip state back to original seed |
 
-## How the engine works
+---
 
-- `src/data/seed.js` — the seed trip (Mumbai → Bali, 6 bookings) and the
-  alternates pool the recovery engine draws from.
-- `src/logic/engine.js` — the actual intelligence:
-  - `computeDownstreamImpact` — BFS over each booking's `dependsOn` edges to
-    find everything a disruption cascades into.
-  - `computeAtRiskBookings` — flags bookings with a thin `bufferMinutes`
-    against whatever they depend on, before any disruption happens.
-  - `computeSeverity` — weighted score (disruption type + cascade size +
-    how many downstream bookings were already tight).
-  - `generateRecoveryOptions` — ranks alternates by a convenience score
-    (cost + time penalty) and marks the best one recommended.
-- `src/data/store.js` — in-memory state per trip. **Resets on server
-  restart** — intentional for a 36-hour build; see "Going further" below.
+## Core Engine Architecture
 
-## Data model
+- **Temporal Dependency Graph (`src/logic/engine.js`)**:
+  - `computeDownstreamImpact`: BFS traversal over `dependsOn` edges; detects hard buffer collapse vs. soft warning thresholds.
+  - `computeSeverity`: Composite 0–100 score weighing disruption type base, cascade depth, buffer violations, and financial exposure.
+  - `simulateDelaySensitivity`: Proactive "What-If" evaluator returning minute-by-minute failure tipping points across delay increments.
+  - `generateRecoveryOptions`: Evaluates alternatives against **Traveler Preferences** (`balanced`, `budget`, `speed`, `comfort`) across cost, schedule drift, and convenience score.
+  - `applyRecoveryPlanToItinerary`: Reconstitutes the itinerary schedule, resets node statuses, updates times, and tallies refund claims.
+  - `generateAIIncidentBrief`: Synthesizes narrative explanations and auto-drafts vendor notifications (driver WhatsApp, hotel late check-in, airline claim).
 
-Identical to what the frontend expects — see the frontend's README for the
-full `Booking` / disruption / recovery JSON shapes. Nothing was renamed
-during the handoff, so no adapter layer was needed.
-
-## Going further (not needed for the demo, but next if there's time)
-
-- Swap `src/data/store.js` for a Mongoose model backed by MongoDB Atlas —
-  every other file only calls `getTrip` / `updateBookingStatuses` / `resetTrip`,
-  so this is a contained change.
-- Add more disruption scenarios by extending `DISRUPTION_TYPES` and
-  `ALTERNATES` in `seed.js` — the engine logic doesn't need to change.
-- Real vendor data would replace the static `ALTERNATES` pool.
+- **Multi-Modal Inventory (`src/data/seed.js`)**:
+  - `trip_001`: Mumbai → Bali Tropical Escape (Flight, private transfer, luxury villa, sunrise volcano trek, temple dance)
+  - `trip_002`: Tokyo → Kyoto Heritage Circuit (Shinkansen bullet train, VIP taxi, Gion Ryokan, tea ceremony, bamboo rickshaw)
+  - `trip_003`: London → Paris → Zurich Business Tour (Eurostar high-speed rail, chauffeur sedan, boutique stay, keynote summit, TGV Lyria)

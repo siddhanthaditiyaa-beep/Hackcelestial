@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { TYPE_ICON, TYPE_LABEL, STATUS_STYLES } from "../utils/visuals";
-import { BOOKING_IMAGE } from "../utils/bookingImages";
-import { CornerDownRight, AlertTriangle, ShieldCheck, ShieldOff } from "lucide-react";
+import { getBookingImage } from "../utils/bookingImages";
+import { CornerDownRight, AlertTriangle, ShieldCheck, ShieldOff, Clock, Sparkles } from "lucide-react";
 
 const cardVariants = {
   hidden: { opacity: 0, y: 18 },
@@ -17,9 +17,10 @@ export default function BookingNode({
   isSelected,
   onSelect,
 }) {
-  const Icon = TYPE_ICON[booking.type];
-  const status = STATUS_STYLES[booking.status];
-  const freeCancellation = booking.cancellationPolicy.refundPct >= 70;
+  const Icon = TYPE_ICON[booking.type] || Clock;
+  const status = STATUS_STYLES[booking.status] || STATUS_STYLES.confirmed;
+  const refundPct = booking.cancellationPolicy?.refundPct ?? 0;
+  const freeCancellation = refundPct >= 70;
 
   return (
     <motion.div
@@ -47,21 +48,21 @@ export default function BookingNode({
           onClick={() => onSelect?.(booking.id)}
           whileHover={{ y: -3 }}
           whileTap={{ scale: 0.995 }}
-          className={`w-full text-left rounded-3xl border bg-surface overflow-hidden transition-colors ${
+          className={`w-full text-left rounded-3xl border bg-surface overflow-hidden transition-colors cursor-pointer ${
             isSelected
-              ? "border-coral shadow-[0_12px_28px_-10px_rgba(255,90,95,0.4)]"
+              ? "border-coral shadow-[0_12px_28px_-10px_rgba(255,90,95,0.4)] ring-2 ring-coral/20"
               : "border-border hover:border-border-strong shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_30px_-12px_rgba(0,0,0,0.18)]"
           }`}
         >
-          {/* real photo banner, Airbnb-listing style */}
+          {/* Destination photo banner */}
           <div className="relative h-36 sm:h-40 overflow-hidden">
             <motion.div
               className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url(${BOOKING_IMAGE[booking.id]})` }}
-              animate={{ scale: [1, 1.08, 1] }}
+              style={{ backgroundImage: `url(${getBookingImage(booking)})` }}
+              animate={{ scale: [1, 1.06, 1] }}
               transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
             <div className="absolute top-3 left-3 h-9 w-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
               <Icon className="h-4.5 w-4.5 text-ink" strokeWidth={2} />
@@ -71,7 +72,13 @@ export default function BookingNode({
               {isProactivelyAtRisk && booking.status === "confirmed" && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-white/95 text-amber shadow-sm">
                   <AlertTriangle className="h-2.5 w-2.5" />
-                  tight connection
+                  tight buffer ({booking.bufferMinutes}m)
+                </span>
+              )}
+              {booking.recoveryPlanApplied && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-teal text-white shadow-sm">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  Recovered
                 </span>
               )}
             </div>
@@ -79,7 +86,7 @@ export default function BookingNode({
             <div className="absolute bottom-3 left-3.5 right-3.5 flex items-end justify-between">
               <div>
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-white/80">
-                  {TYPE_LABEL[booking.type]}
+                  {booking.day} · {TYPE_LABEL[booking.type] || booking.type}
                 </span>
                 <h3 className="font-display font-semibold text-base text-white leading-tight drop-shadow">
                   {booking.title}
@@ -96,15 +103,24 @@ export default function BookingNode({
             </div>
           </div>
 
-          {/* content strip below the photo */}
-          <div className="px-4 py-3 flex items-center justify-between gap-3">
+          {/* Content strip below the photo */}
+          <div className="px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
             <div className="min-w-0">
-              <p className="text-sm text-ink-dim truncate">{booking.subtitle}</p>
-              <div className="flex items-center gap-1.5 mt-1.5">
-                <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${status.badgeBg} ${status.badgeText}`}>
-                  {status.label}
-                </span>
+              <p className="text-sm text-ink-dim truncate">
+                {booking.subtitle} · {booking.vendor}
+              </p>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${status.badgeBg} ${status.badgeText}`}>
+                    {status.label}
+                  </span>
+                </div>
+                {booking.bufferMinutes !== null && (
+                  <span className="text-[11px] text-ink-faint font-medium">
+                    Buffer: {booking.bufferMinutes}m
+                  </span>
+                )}
               </div>
             </div>
 
@@ -118,7 +134,7 @@ export default function BookingNode({
               ) : (
                 <ShieldOff className="h-3.5 w-3.5" />
               )}
-              {freeCancellation ? "Flexible" : "Non-refundable"}
+              {refundPct > 0 ? `${refundPct}% Refund Policy` : "Non-refundable"}
             </span>
           </div>
         </motion.button>

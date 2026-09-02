@@ -1,7 +1,20 @@
-import { Plane, Building2, CarFront, Compass } from "lucide-react";
+import {
+  Plane,
+  Building2,
+  CarFront,
+  Compass,
+  TrainFront,
+  Clock,
+  AlertTriangle,
+  CloudLightning,
+  XCircle,
+  UserCheck,
+  Car,
+} from "lucide-react";
 
 export const TYPE_ICON = {
   flight: Plane,
+  train: TrainFront,
   hotel: Building2,
   transfer: CarFront,
   activity: Compass,
@@ -9,14 +22,15 @@ export const TYPE_ICON = {
 
 export const TYPE_LABEL = {
   flight: "Flight",
+  train: "High-Speed Rail",
   hotel: "Stay",
   transfer: "Transfer",
   activity: "Experience",
 };
 
-// Airbnb-style colorful "cover" gradient per booking type, standing in for photography.
 export const TYPE_GRADIENT = {
   flight: "linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)",
+  train: "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
   hotel: "linear-gradient(135deg, #fbbf6d 0%, #ff5a5f 100%)",
   transfer: "linear-gradient(135deg, #34d399 0%, #00a699 100%)",
   activity: "linear-gradient(135deg, #c084fc 0%, #e31c5f 100%)",
@@ -49,10 +63,29 @@ export const STATUS_STYLES = {
   },
 };
 
-export function formatINR(amount) {
-  if (amount === 0) return "₹0";
+export const DISRUPTION_ICONS = {
+  delay: Clock,
+  cancellation_transport: XCircle,
+  missed_connection: AlertTriangle,
+  cancellation_hotel_activity: Building2,
+  transfer_failure: Car,
+  weather: CloudLightning,
+  traveler_change: UserCheck,
+};
+
+export function formatCurrency(amount, currency = "INR") {
+  if (amount === 0) {
+    const sym = currency === "INR" ? "₹" : currency === "EUR" ? "€" : currency === "JPY" ? "¥" : "$";
+    return `${sym}0`;
+  }
   const sign = amount > 0 ? "+" : "−";
-  return `${sign}₹${Math.abs(amount).toLocaleString("en-IN")}`;
+  const abs = Math.abs(amount);
+  const sym = currency === "INR" ? "₹" : currency === "EUR" ? "€" : currency === "JPY" ? "¥" : "$";
+  return `${sign}${sym}${abs.toLocaleString()}`;
+}
+
+export function formatINR(amount) {
+  return formatCurrency(amount, "INR");
 }
 
 export function formatMinutes(mins) {

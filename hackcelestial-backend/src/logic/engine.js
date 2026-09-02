@@ -1,4 +1,9 @@
 import { ALTERNATES, DISRUPTION_SEVERITY_BASE } from "../data/seed.js";
+import { GoogleGenAI } from "@google/genai";
+import "dotenv/config";
+
+const apiKey = process.env.GEMINI_API_KEY;
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /**
  * Enhanced graph traversal (BFS) computing direct and downstream cascade impacts.
@@ -167,14 +172,56 @@ export function simulateDelaySensitivity(bookings, bookingId) {
  * Generates ranked, multi-criteria recovery options tailored to traveler preferences.
  * Preferences: 'balanced' (default), 'budget', 'speed', 'comfort'.
  */
-export function generateRecoveryOptions(allBookings, disruptedId, downstreamIds, preference = "balanced") {
+export async function generateRecoveryOptions(allBookings, disruptedId, downstreamIds, preference = "balanced") {
   const affectedIds = [disruptedId, ...downstreamIds];
   const totalBookings = allBookings.length;
   const disruptedBooking = allBookings.find((b) => b.id === disruptedId);
   const rawAlternates = ALTERNATES[disruptedId] || [];
 
-  // If no static alternates exist, generate dynamic resilient recovery plans
-  const alternatesList = rawAlternates.length > 0 ? rawAlternates : [
+  let alternatesList = rawAlternates;
+
+  if (ai && (!alternatesList || alternatesList.length === 0)) {
+    try {
+      const prompt = `You are a Travel Disruption Recovery Engine. A user has experienced a disruption.
+Disrupted Booking: ${JSON.stringify(disruptedBooking)}
+Downstream Bookings count: ${downstreamIds.length}
+Traveler Preference: ${preference}
+
+Generate exactly 3 diverse alternative recovery options as a JSON array.
+Each object MUST have these exact keys:
+- "id": string (unique ID)
+- "title": string (short descriptive title)
+- "strategy": string (budget, speed, comfort, or balanced)
+- "subtitle": string (brief detail)
+- "costDelta": number (estimated extra cost in local currency, negative for refund/saving)
+- "refundEstimated": number
+- "timeDeltaMinutes": number (schedule change in minutes)
+- "vendor": string (supplier name)
+- "badge": string (short highlight, e.g., "Fastest Option")
+- "convenienceScore": number (0-100 base score before preference adjustments)
+- "mitigations": array of 1-3 short strings detailing the fix
+
+Ensure the options are creative, realistic, and tailored to the preference.`;
+      
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+        },
+      });
+      const generated = JSON.parse(response.text);
+      if (Array.isArray(generated) && generated.length > 0) {
+        alternatesList = generated;
+      }
+    } catch (err) {
+      console.error("AI recovery generation failed:", err);
+    }
+  }
+
+  // If no static or AI alternates exist, generate dynamic resilient recovery plans fallback
+  if (!alternatesList || alternatesList.length === 0) {
+    alternatesList = [
     {
       id: `alt_dyn_${disruptedId}_1`,
       title: `Reschedule ${disruptedBooking?.title || "booking"} to next slot`,
@@ -215,6 +262,7 @@ export function generateRecoveryOptions(allBookings, disruptedId, downstreamIds,
       mitigations: ["Direct refund to original payment source"],
     },
   ];
+  }
 
   const plans = alternatesList.map((alt, idx) => {
     const costDelta = alt.costDelta || 0;
@@ -348,7 +396,7 @@ export function applyRecoveryPlanToItinerary(trip, planId, bookingId, downstream
  * AI Incident Copilot generator:
  * Synthesizes human-readable explanations, reasonings, and auto-notifications for drivers and hotels.
  */
-export function generateAIIncidentBrief(disruption, impact, recoveryPlan, bookingsById, currency = "INR") {
+export async function generateAIIncidentBrief(disruption, impact, recoveryPlan, bookingsById, currency = "INR") {
   const directBooking = bookingsById[disruption.bookingId];
   const downstreamTitles = impact.downstreamImpacts
     .map((id) => bookingsById[id]?.title)
@@ -356,6 +404,38 @@ export function generateAIIncidentBrief(disruption, impact, recoveryPlan, bookin
 
   const directTitle = directBooking?.title || "Transport booking";
   const currSym = currency === "INR" ? "\u20b9" : currency === "EUR" ? "\u20ac" : "\u00a5";
+
+  if (ai) {
+    try {
+      const prompt = `You are an AI Travel Incident Copilot. Generate a structured JSON incident brief for a disruption.
+Disruption Type: ${disruption.type.replace(/_/g, " ")}
+Directly Impacted Booking: ${directTitle}
+Downstream Bookings at Risk: ${downstreamTitles.join(", ") || "None"}
+Recovery Plan Applied: ${JSON.stringify(recoveryPlan)}
+Currency Symbol: ${currSym}
+
+Return ONLY a JSON object with these EXACT keys:
+- "headline": string (Short catchy incident title)
+- "executiveSummary": string (2-3 sentences explaining the cascade and resolution)
+- "chainReactionExplained": array of 3 strings explaining: 1) Root Cause, 2) Cascade Effect, 3) Mitigation
+- "vendorDrafts": object containing:
+  - "hotelNotification": object with "recipient", "subject", "message" (or null if irrelevant)
+  - "driverNotification": object with "recipient", "subject", "message" (or null if irrelevant)
+  - "insuranceClaimFiling": object with "claimType", "estimatedClaimable" (string with currency), "status"
+
+Draft realistic and professional communications for the vendors.`;
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+        },
+      });
+      return JSON.parse(response.text);
+    } catch (err) {
+      console.error("AI brief generation failed:", err);
+    }
+  }
 
   const headline = `Incident Recovered: ${directTitle}`;
   const executiveSummary = `Recoup's Resilience Engine intercepted a cascade failure originating from ${directTitle}. By applying "${recoveryPlan.label}", we recovered ${currSym}${recoveryPlan.refundEstimated.toLocaleString()} under carrier policy, prevented ${downstreamTitles.length} downstream bookings from cancellation, and restored the itinerary with a convenience rating of ${recoveryPlan.convenienceScore}/100.`;

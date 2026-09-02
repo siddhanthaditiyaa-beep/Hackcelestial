@@ -4,28 +4,28 @@
   --font-display: "Poppins", sans-serif;
   --font-sans: "Inter", sans-serif;
 
-  /* warm, light, consumer-travel palette (MMT / Airbnb energy) */
-  --color-page: #ffffff;
-  --color-page-soft: #f7f7fb;
-  --color-surface: #ffffff;
-  --color-surface-sunk: #f4f4f8;
-  --color-border: #ececf1;
-  --color-border-strong: #e0e0e8;
+  /* Sleek Dark Mode / Glassmorphism palette */
+  --color-page: #0b0f19;
+  --color-page-soft: #121827;
+  --color-surface: rgba(255, 255, 255, 0.03);
+  --color-surface-sunk: rgba(0, 0, 0, 0.25);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
 
-  --color-ink: #1f1b2e;
-  --color-ink-dim: #6b7280;
-  --color-ink-faint: #9ca3af;
+  --color-ink: #f8fafc;
+  --color-ink-dim: #94a3b8;
+  --color-ink-faint: #475569;
 
-  --color-coral: #ff5a5f;
-  --color-coral-dim: #fff0ef;
-  --color-teal: #00a699;
-  --color-teal-dim: #e5f8f6;
+  --color-coral: #ff4f5e;
+  --color-coral-dim: rgba(255, 79, 94, 0.15);
+  --color-teal: #00f0ff;
+  --color-teal-dim: rgba(0, 240, 255, 0.15);
   --color-amber: #ffb400;
-  --color-amber-dim: #fff6e0;
+  --color-amber-dim: rgba(255, 180, 0, 0.15);
   --color-pink: #e31c5f;
-  --color-pink-dim: #fde8ee;
-  --color-blue: #2563eb;
-  --color-blue-dim: #eaf1ff;
+  --color-pink-dim: rgba(227, 28, 95, 0.15);
+  --color-blue: #3b82f6;
+  --color-blue-dim: rgba(59, 130, 246, 0.15);
 }
 
 html, body, #root {
@@ -33,10 +33,22 @@ html, body, #root {
 }
 
 body {
-  background-color: var(--color-page-soft);
+  background-color: var(--color-page);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(0, 240, 255, 0.04), transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(255, 79, 94, 0.04), transparent 50%);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Base Glass panel utility */
+.glass-panel {
+  background: var(--color-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 ::selection {

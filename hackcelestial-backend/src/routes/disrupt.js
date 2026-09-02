@@ -18,7 +18,7 @@ router.get("/disruption-types", (_req, res) => {
 
 // POST /api/disrupt
 // Body: { tripId, bookingId, type, delayMinutes, travelerPreference }
-router.post("/disrupt", (req, res) => {
+router.post("/disrupt", async (req, res) => {
   const {
     tripId = "trip_001",
     bookingId,
@@ -73,7 +73,7 @@ router.post("/disrupt", (req, res) => {
   updateBookingStatuses(tripId, statusUpdates);
 
   // 4. Generate ranked recovery options tailored to traveler preferences
-  const recoveryOptions = generateRecoveryOptions(
+  const recoveryOptions = await generateRecoveryOptions(
     state.bookings,
     bookingId,
     downstreamIds,
@@ -92,7 +92,7 @@ router.post("/disrupt", (req, res) => {
 
   const topPlan = recoveryOptions.find((p) => p.recommended) || recoveryOptions[0];
   const aiBrief = topPlan
-    ? generateAIIncidentBrief(
+    ? await generateAIIncidentBrief(
         disruptionMeta,
         { directImpact: bookingId, downstreamImpacts: downstreamIds },
         topPlan,

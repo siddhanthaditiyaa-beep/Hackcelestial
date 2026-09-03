@@ -139,9 +139,9 @@ export default function DisruptionConsole({
           <div className="grid grid-cols-2 gap-2">
             {[
               { id: "balanced", label: "Balanced", desc: "Pareto optimal" },
-              { id: "budget", label: "Budget Saver", desc: "Max refunds" },
-              { id: "speed", label: "Speed First", desc: "Earliest arrival" },
-              { id: "comfort", label: "Max Comfort", desc: "Low friction" },
+              { id: "comfort", label: "Stay Put", desc: "No hotel change" },
+              { id: "budget", label: "Budget Saver", desc: "Save money" },
+              { id: "speed", label: "Speed First", desc: "Save time" },
             ].map((p) => (
               <button
                 key={p.id}

@@ -234,7 +234,7 @@ Net Financial Delta: ₹${resolvedPlan?.costDelta || 0}
             </button>
             <button
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-ink text-surface text-xs font-semibold hover:opacity-90 transition"
+              className="px-5 py-2.5 rounded-xl bg-ink text-page text-xs font-semibold hover:opacity-90 transition"
             >
               Done
             </button>

@@ -8,8 +8,10 @@ import ImpactPanel from "./components/ImpactPanel";
 import RecoveryList from "./components/RecoveryList";
 import ConciergeCopilotModal from "./components/ConciergeCopilotModal";
 import Login from "./components/Login";
+import BookingSystem from "./components/BookingSystem";
+import Suggestions from "./components/Suggestions";
 import { useItineraryEngine } from "./hooks/useItineraryEngine";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Home, Compass, MessageSquarePlus } from "lucide-react";
 
 export default function App() {
   const {
@@ -45,6 +47,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("recoup_auth") === "true" || sessionStorage.getItem("recoup_auth") === "true";
   });
+  const [mainTab, setMainTab] = useState("dashboard"); // 'dashboard', 'booking', 'suggestions'
 
   useEffect(() => {
     if (trip && trip.bookings && trip.bookings.length > 0) {
@@ -119,7 +122,36 @@ export default function App() {
         }}
       />
 
-      <main className="max-w-[1240px] mx-auto px-4 md:px-8 -mt-6 pb-12">
+      {/* Global Navigation Tabs */}
+      <div className="max-w-[1240px] mx-auto px-4 md:px-8 -mt-10 mb-8 relative z-10">
+        <div className="flex items-center gap-2 bg-surface backdrop-blur-md p-1.5 rounded-2xl border border-border inline-flex shadow-sm">
+          <button 
+            onClick={() => setMainTab("dashboard")}
+            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${mainTab === "dashboard" ? "bg-ink text-page shadow-md" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+          >
+            <Home className="h-4 w-4" /> Itinerary Dashboard
+          </button>
+          <button 
+            onClick={() => setMainTab("booking")}
+            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${mainTab === "booking" ? "bg-ink text-page shadow-md" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+          >
+            <Compass className="h-4 w-4" /> Explore & Book
+          </button>
+          <button 
+            onClick={() => setMainTab("suggestions")}
+            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${mainTab === "suggestions" ? "bg-ink text-page shadow-md" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+          >
+            <MessageSquarePlus className="h-4 w-4" /> Trip Suggestions
+          </button>
+        </div>
+      </div>
+
+      <main className="max-w-[1240px] mx-auto px-4 md:px-8 pb-12">
+        {mainTab === "booking" && <BookingSystem />}
+        
+        {mainTab === "suggestions" && <Suggestions destination={trip.tripName} />}
+        
+        {mainTab === "dashboard" && (
         <div className="bg-page rounded-[2rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] px-4 md:px-8 py-4 grid lg:grid-cols-[1fr_420px] gap-8">
           {/* Main Visualizer Area */}
           <section className="pt-4 pb-6">
@@ -228,6 +260,7 @@ export default function App() {
             )}
           </aside>
         </div>
+        )}
       </main>
 
       {/* AI Copilot & Concierge Modal */}

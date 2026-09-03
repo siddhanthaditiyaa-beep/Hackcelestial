@@ -17,6 +17,7 @@ export function useItineraryEngine() {
   const [disruptionTypes, setDisruptionTypes] = useState([]);
   const [atRiskIds, setAtRiskIds] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [triggering, setTriggering] = useState(false);
   const [applying, setApplying] = useState(false);
 
@@ -36,12 +37,13 @@ export function useItineraryEngine() {
 
   const load = useCallback(async (tripIdToLoad = activeTripId) => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [tripsList, itinerary, types, atRisk] = await Promise.all([
         getAllTrips().catch(() => []),
         getItinerary(tripIdToLoad),
-        getDisruptionTypes(),
-        getAtRiskBookings(tripIdToLoad),
+        getDisruptionTypes().catch(() => []),
+        getAtRiskBookings(tripIdToLoad).catch(() => []),
       ]);
       setAllTrips(tripsList.length ? tripsList : [{ id: "trip_001", tripName: "Mumbai \u2192 Bali" }]);
       setTrip(itinerary);
@@ -49,6 +51,7 @@ export function useItineraryEngine() {
       setAtRiskIds(atRisk);
     } catch (err) {
       console.error("Failed to load itinerary engine data:", err);
+      setLoadError(err?.message || "Couldn't reach the Recoup backend.");
     } finally {
       setLoading(false);
     }
@@ -135,9 +138,13 @@ export function useItineraryEngine() {
   }, []);
 
   const reset = useCallback(async () => {
-    await resetItinerary(activeTripId);
-    dismiss();
-    await load(activeTripId);
+    try {
+      await resetItinerary(activeTripId);
+      dismiss();
+      await load(activeTripId);
+    } catch (err) {
+      console.error("Reset itinerary error:", err);
+    }
   }, [activeTripId, dismiss, load]);
 
   const runDelaySimulation = useCallback(
@@ -154,6 +161,7 @@ export function useItineraryEngine() {
     disruptionTypes,
     atRiskIds,
     loading,
+    loadError,
     triggering,
     applying,
     travelerPreference,
@@ -170,6 +178,7 @@ export function useItineraryEngine() {
     appliedDiffs,
     financialSummary,
     switchTrip,
+    load,
     trigger,
     applyPlan,
     dismiss,

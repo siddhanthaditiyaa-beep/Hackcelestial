@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   RotateCcw,
@@ -8,11 +8,11 @@ import {
   Calendar,
   Radar,
   ChevronDown,
-  Sun,
-  Moon,
   LogOut,
+  Briefcase,
 } from "lucide-react";
-import { HERO_IMAGE, getTripHeroImage } from "../utils/bookingImages";
+import { getTripHeroImage } from "../utils/bookingImages";
+import ThemeToggle from "./ui/ThemeToggle";
 
 export default function Header({
   trip,
@@ -25,33 +25,10 @@ export default function Header({
   disruptedCount,
   onReset,
   onOpenCopilot,
+  onOpenMyBookings,
   onLogout,
 }) {
-  const [isDark, setIsDark] = useState(true);
   const [isTripDropdownOpen, setIsTripDropdownOpen] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "light") {
-      setIsDark(false);
-      document.documentElement.classList.remove("dark");
-    } else {
-      setIsDark(true);
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    if (isDark) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDark(true);
-    }
-  };
 
   const total = trip?.bookings?.length ?? 0;
   const onTrack = trip
@@ -70,15 +47,7 @@ export default function Header({
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.8) 100%)",
-        }}
-        aria-hidden
-      />
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(120deg, rgba(255,90,95,0.35), rgba(255,180,0,0.18))",
+            "linear-gradient(180deg, rgba(20,18,15,0.25) 0%, rgba(20,18,15,0.6) 60%, rgba(20,18,15,0.85) 100%)",
         }}
         aria-hidden
       />
@@ -87,11 +56,11 @@ export default function Header({
         {/* Top bar: Brand + Trip Switcher + Copilot + Reset */}
         <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-2xl bg-white/25 backdrop-blur flex items-center justify-center shadow-xs">
-              <span className="text-white font-display font-bold text-base">R</span>
+            <div className="h-9 w-9 rounded-sm bg-white/20 backdrop-blur flex items-center justify-center">
+              <span className="text-white font-display font-semibold text-base">R</span>
             </div>
             <div>
-              <span className="font-display font-bold text-white text-lg tracking-tight block leading-tight">
+              <span className="font-display font-medium text-white text-lg tracking-tight block leading-tight">
                 Recoup
               </span>
               <span className="text-[10px] uppercase tracking-wider font-semibold text-white/70 block">
@@ -106,7 +75,7 @@ export default function Header({
               <div className="relative">
                 <button
                   onClick={() => setIsTripDropdownOpen(!isTripDropdownOpen)}
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur text-white font-medium text-xs rounded-full px-3.5 py-2 pr-8 appearance-none cursor-pointer border border-white/20 focus:outline-none inline-flex items-center transition-colors"
+                  className="bg-white/15 hover:bg-white/25 backdrop-blur text-white font-medium text-xs rounded-full px-3.5 py-2 pr-8 appearance-none cursor-pointer border border-white/15 focus:outline-none inline-flex items-center transition-colors"
                 >
                   <span className="truncate max-w-[200px]">
                     {allTrips.find((t) => t.id === activeTripId)?.tripName || "Select Trip"}
@@ -116,16 +85,16 @@ export default function Header({
 
                 {isTripDropdownOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-40" 
+                    <div
+                      className="fixed inset-0 z-40"
                       onClick={() => setIsTripDropdownOpen(false)}
                     />
-                    
-                    <motion.div 
+
+                    <motion.div
                       initial={{ opacity: 0, y: 5, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="absolute left-0 mt-2 w-max min-w-[240px] z-50 glass-panel border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-page/90 backdrop-blur-2xl"
+                      className="absolute left-0 mt-2 w-max min-w-[240px] z-50 bg-surface border border-border rounded-md overflow-hidden shadow-md"
                     >
                       <div className="py-1">
                         {allTrips.map((t) => (
@@ -135,13 +104,13 @@ export default function Header({
                               onSwitchTrip?.(t.id);
                               setIsTripDropdownOpen(false);
                             }}
-                            className={`block w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-white/10 ${
-                              activeTripId === t.id ? "text-teal font-bold bg-white/10" : "text-ink font-medium"
+                            className={`block w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-surface-sunk ${
+                              activeTripId === t.id ? "text-brand font-bold" : "text-ink font-medium"
                             }`}
                           >
                             <div className="flex items-center gap-2">
                               {activeTripId === t.id ? (
-                                <span className="h-1.5 w-1.5 rounded-full bg-teal shrink-0 shadow-[0_0_8px_var(--color-teal)]" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-brand shrink-0" />
                               ) : (
                                 <span className="h-1.5 w-1.5 rounded-full bg-transparent shrink-0" />
                               )}
@@ -159,20 +128,23 @@ export default function Header({
             {/* AI Copilot Button */}
             <button
               onClick={onOpenCopilot}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full bg-white/25 hover:bg-white/35 backdrop-blur text-white transition shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur text-white transition cursor-pointer"
             >
-              <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+              <Sparkles className="h-3.5 w-3.5" />
               AI Copilot
             </button>
 
-            {/* Theme Toggle Button */}
+            {/* My Bookings */}
             <button
-              onClick={toggleTheme}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur text-white transition cursor-pointer"
-              title="Toggle Theme"
+              onClick={onOpenMyBookings}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur text-white transition cursor-pointer"
+              title="My Bookings"
             >
-              {isDark ? <Sun className="h-4 w-4 text-amber-200" /> : <Moon className="h-4 w-4 text-white" />}
+              <Briefcase className="h-3.5 w-3.5" />
             </button>
+
+            {/* Theme Toggle Button */}
+            <ThemeToggle className="bg-white/15 hover:bg-white/25 backdrop-blur text-white" />
 
             {/* Reset Button */}
             <button
@@ -186,7 +158,7 @@ export default function Header({
             {/* Logout Button */}
             <button
               onClick={onLogout}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full bg-white/15 hover:bg-pink-dim backdrop-blur text-white transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3.5 py-2 rounded-full bg-white/15 hover:bg-status-disrupted/40 backdrop-blur text-white transition-colors cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -211,12 +183,12 @@ export default function Header({
                 <span>·</span>
                 <span>{trip.traveler?.name}</span>
                 {trip.traveler?.loyaltyTier && (
-                  <span className="px-2 py-0.2 rounded-full bg-white/20 text-[10px] font-bold">
+                  <span className="px-2 py-0.2 rounded-full bg-white/15 text-[10px] font-bold">
                     {trip.traveler.loyaltyTier}
                   </span>
                 )}
               </div>
-              <h1 className="font-display font-extrabold text-white text-2xl md:text-3xl lg:text-4xl tracking-tight drop-shadow-sm">
+              <h1 className="font-display font-medium text-white text-2xl md:text-3xl lg:text-4xl tracking-tight">
                 {trip.tripName}
               </h1>
               {trip.description && (
@@ -227,14 +199,14 @@ export default function Header({
             </motion.div>
 
             {/* View Selector Tabs & Status Readouts */}
-            <div className="pt-2 flex items-center justify-between gap-4 flex-wrap border-t border-white/20">
+            <div className="pt-2 flex items-center justify-between gap-4 flex-wrap border-t border-white/15">
               {/* View Switcher Pills */}
-              <div className="flex items-center gap-1 bg-black/25 backdrop-blur p-1 rounded-2xl border border-white/15">
+              <div className="flex items-center gap-1 bg-black/20 backdrop-blur p-1 rounded-md border border-white/10">
                 <button
                   onClick={() => onSwitchView?.("rail")}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition cursor-pointer ${
                     activeView === "rail"
-                      ? "bg-white text-slate-900 shadow-sm"
+                      ? "bg-white text-ink shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -243,9 +215,9 @@ export default function Header({
                 </button>
                 <button
                   onClick={() => onSwitchView?.("graph")}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition cursor-pointer ${
                     activeView === "graph"
-                      ? "bg-white text-slate-900 shadow-sm"
+                      ? "bg-white text-ink shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -254,9 +226,9 @@ export default function Header({
                 </button>
                 <button
                   onClick={() => onSwitchView?.("radar")}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition cursor-pointer ${
                     activeView === "radar"
-                      ? "bg-white text-slate-900 shadow-sm"
+                      ? "bg-white text-ink shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -268,20 +240,20 @@ export default function Header({
               {/* Status Badges */}
               <div className="flex items-center gap-2 flex-wrap">
                 {disruptedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-slate-900 text-white border border-white/10 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-pink shadow-[0_0_10px_var(--color-pink)] animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-ink/80 text-white border border-white/10">
+                    <span className="h-2 w-2 rounded-full bg-status-disrupted animate-pulse" />
                     {disruptedCount} Disrupted
                   </span>
                 )}
                 {atRiskCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-slate-900 text-white border border-white/10 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-amber shadow-[0_0_10px_var(--color-amber)]" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-ink/80 text-white border border-white/10">
+                    <span className="h-2 w-2 rounded-full bg-status-risk" />
                     {atRiskCount} At Risk
                   </span>
                 )}
                 {disruptedCount === 0 && atRiskCount === 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-slate-900 text-white border border-white/10 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-teal shadow-[0_0_12px_rgba(13,148,136,1)] animate-[pulse_2s_ease-in-out_infinite]" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-ink/80 text-white border border-white/10">
+                    <span className="h-2 w-2 rounded-full bg-status-resolved animate-[pulse_2s_ease-in-out_infinite]" />
                     Itinerary Optimal
                   </span>
                 )}

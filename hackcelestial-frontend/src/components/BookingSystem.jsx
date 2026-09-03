@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -10,7 +10,10 @@ import {
 } from "lucide-react";
 import Reviews from "./Reviews";
 import BookingModal from "./BookingModal";
+import ResultCard from "./ui/ResultCard";
+import DarkPromoBanner from "./ui/DarkPromoBanner";
 import { useBooking } from "../context/BookingContext";
+import { CATEGORY_TINT } from "../utils/visuals";
 
 /* Fix Leaflet default icon */
 delete L.Icon.Default.prototype._getIconUrl;
@@ -158,147 +161,155 @@ function MapFlyTo({ center, zoom }) {
   return null;
 }
 
-/* ── CARD COMPONENTS ── */
-function FlightCard({ item, onReview, onBook }) {
+/* ── PER-CATEGORY CARD RENDERERS (share ResultCard chrome) ── */
+function renderFlightCard(item, { onReview, onBook }) {
+  const tint = CATEGORY_TINT.flight;
   return (
-    <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
-      <div className="relative h-32 overflow-hidden">
-        <img src={item.img} alt={item.airline} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
-        <div className="absolute inset-0 p-4 flex flex-col justify-between">
-          <div className="flex justify-between">
-            <span className="text-[10px] font-bold bg-white/20 backdrop-blur text-white px-2 py-0.5 rounded-full">{item.airline} · {item.flight}</span>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.stops === "Non-stop" ? "bg-teal text-slate-900" : "bg-amber-dim/80 text-amber backdrop-blur border border-amber/30"}`}>{item.stops}</span>
+    <ResultCard
+      key={item.id}
+      imageSrc={item.img}
+      imageAlt={item.airline}
+      imageHeight="h-32"
+      tint={tint}
+      badge={
+        <span className="text-[10px] font-bold bg-white/15 backdrop-blur text-white px-2 py-0.5 rounded-full">
+          {item.airline} · {item.flight}
+        </span>
+      }
+      overlay={
+        <div className="flex items-end justify-between text-white">
+          <div><div className="text-xl font-bold">{item.from}</div><div className="text-[10px] text-white/70">{item.dep}</div></div>
+          <div className="text-center px-2 text-[10px] text-white/60">
+            {item.stops}
+            <div className="border-t border-white/30 mt-1 w-10 mx-auto" />
+            {item.duration}
           </div>
-          <div className="flex items-end justify-between text-white">
-            <div><div className="text-xl font-bold">{item.from}</div><div className="text-[10px] text-white/70">{item.dep}</div></div>
-            <div className="text-center px-2 text-[10px] text-white/60">{item.duration}<div className="border-t border-white/40 mt-1" /></div>
-            <div className="text-right"><div className="text-xl font-bold">{item.to}</div><div className="text-[10px] text-white/70">{item.arr}</div></div>
-          </div>
+          <div className="text-right"><div className="text-xl font-bold">{item.to}</div><div className="text-[10px] text-white/70">{item.arr}</div></div>
         </div>
-      </div>
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div>
-          <div className="font-display font-bold text-lg text-ink">{item.price}</div>
-          <div className="flex items-center gap-1 text-amber text-xs mt-0.5"><Star className="h-3 w-3 fill-amber" />{item.rating}</div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-coral to-pink text-white text-xs font-bold hover:brightness-110 shadow-sm">Book</button>
-        </div>
-      </div>
-    </motion.div>
+      }
+      price={item.price}
+      ratingValue={item.rating}
+      ctaLabel="Book"
+      onReview={() => onReview(item)}
+      onBook={() => onBook(item)}
+    />
   );
 }
 
-function TrainCard({ item, onReview, onBook }) {
+function renderTrainCard(item, { onReview, onBook }) {
+  const tint = CATEGORY_TINT.train;
   return (
-    <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
-      <div className="relative h-28 overflow-hidden">
-        <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/75 to-black/20" />
-        <div className="absolute inset-0 p-4 flex items-end justify-between text-white">
+    <ResultCard
+      key={item.id}
+      imageSrc={item.img}
+      imageAlt={item.name}
+      imageHeight="h-28"
+      tint={tint}
+      overlay={
+        <div className="flex items-end justify-between text-white">
           <div><div className="font-bold text-sm">{item.name}</div><div className="text-[10px] text-white/70">{item.number} · {item.class}</div></div>
           <div className="text-right text-[10px] text-white/70"><div>{item.dep} → {item.arr}</div><div className="font-semibold text-xs text-white">{item.duration}</div></div>
         </div>
-      </div>
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div>
-          <div className="font-display font-bold text-lg text-ink">{item.price}</div>
-          <div className="flex items-center gap-1 text-amber text-xs mt-0.5"><Star className="h-3 w-3 fill-amber" />{item.rating} · {item.from}→{item.to}</div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue to-teal text-white text-xs font-bold hover:brightness-110 shadow-sm">Book Seat</button>
-        </div>
-      </div>
-    </motion.div>
+      }
+      price={item.price}
+      ratingValue={item.rating}
+      metaText={`${item.from} → ${item.to}`}
+      ctaLabel="Book Seat"
+      onReview={() => onReview(item)}
+      onBook={() => onBook(item)}
+    />
   );
 }
 
-function HotelCard({ item, onReview, onBook }) {
+function renderHotelCard(item, { onReview, onBook }) {
+  const tint = CATEGORY_TINT.hotel;
   return (
-    <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
-      <div className="relative h-40 overflow-hidden">
-        <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute top-3 left-3"><span className="text-[10px] font-bold bg-blue/90 backdrop-blur text-white px-2 py-0.5 rounded-full">{item.type}</span></div>
-        <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
+    <ResultCard
+      key={item.id}
+      imageSrc={item.img}
+      imageAlt={item.name}
+      imageHeight="h-40"
+      tint={tint}
+      badge={<span className={`text-[10px] font-bold backdrop-blur text-white px-2 py-0.5 rounded-full ${tint.badgeBg}`}>{item.type}</span>}
+      overlay={
+        <div className="flex items-end justify-between">
           <div>
             <div className="font-bold text-white text-sm leading-tight">{item.name}</div>
             <div className="text-[10px] text-white/70 flex items-center gap-1 mt-0.5"><MapPin className="h-2.5 w-2.5" />{item.loc}</div>
           </div>
-          <span className="flex items-center gap-1 text-amber font-bold text-xs bg-black/50 backdrop-blur px-2 py-0.5 rounded-lg"><Star className="h-3 w-3 fill-amber" />{item.rating}</span>
+          <span className="flex items-center gap-1 text-status-risk font-bold text-xs bg-black/50 backdrop-blur px-2 py-0.5 rounded-lg"><Star className="h-3 w-3 fill-status-risk" />{item.rating}</span>
         </div>
-      </div>
-      <div className="px-4 py-3">
-        <div className="flex flex-wrap gap-1 mb-2">{item.amenities.map(a => <span key={a} className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-teal-dim/30 text-teal border border-teal/20">{a}</span>)}</div>
-        <div className="flex items-center justify-between">
-          <div><div className="text-[10px] text-ink-faint">from</div><div className="font-display font-bold text-lg text-ink">{item.price}</div></div>
-          <div className="flex gap-2">
-            <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-            <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber to-coral text-white text-xs font-bold hover:brightness-110 shadow-sm">Reserve</button>
-          </div>
-        </div>
-      </div>
-    </motion.div>
+      }
+      price={item.price}
+      priceLabel="from"
+      ctaLabel="Reserve"
+      onReview={() => onReview(item)}
+      onBook={() => onBook(item)}
+    />
   );
 }
 
-function HostelCard({ item, onReview, onBook }) {
+function renderHostelCard(item, { onReview, onBook }) {
+  const tint = CATEGORY_TINT.hostel;
   return (
-    <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
-      <div className="relative h-32 overflow-hidden">
-        <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-        <div className="absolute top-3 left-3"><span className="text-[10px] font-bold bg-pink/90 text-white px-2 py-0.5 rounded-full backdrop-blur">{item.vibe}</span></div>
-        <div className="absolute bottom-3 left-4 right-4">
+    <ResultCard
+      key={item.id}
+      imageSrc={item.img}
+      imageAlt={item.name}
+      imageHeight="h-32"
+      tint={tint}
+      badge={<span className={`text-[10px] font-bold text-white px-2 py-0.5 rounded-full backdrop-blur ${tint.badgeBg}`}>{item.vibe}</span>}
+      overlay={
+        <div>
           <div className="font-bold text-white text-sm">{item.name}</div>
           <div className="text-[10px] text-white/70 flex items-center gap-1"><MapPin className="h-2.5 w-2.5" />{item.loc}</div>
         </div>
-      </div>
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div>
-          <div className="font-display font-bold text-lg text-ink">{item.price}</div>
-          <div className="flex items-center gap-2 text-xs mt-0.5">
-            <span className="flex items-center gap-1 text-amber font-semibold"><Star className="h-3 w-3 fill-amber" />{item.rating}</span>
-            <span className="text-ink-faint">· {item.beds}</span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink to-coral text-white text-xs font-bold hover:brightness-110 shadow-sm">Book Bed</button>
-        </div>
-      </div>
-    </motion.div>
+      }
+      price={item.price}
+      ratingValue={item.rating}
+      metaText={item.beds}
+      ctaLabel="Book Bed"
+      onReview={() => onReview(item)}
+      onBook={() => onBook(item)}
+    />
   );
 }
 
-function ActivityCard({ item, onReview, onBook }) {
+function renderActivityCard(item, { onReview, onBook }) {
+  const tint = CATEGORY_TINT.activity;
   return (
-    <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
-      <div className="relative h-40 overflow-hidden">
-        <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-        <div className="absolute top-3 left-3"><span className="text-[10px] font-bold bg-white/20 backdrop-blur text-white px-2 py-0.5 rounded-full border border-white/20">{item.tag}</span></div>
-        <div className="absolute bottom-3 left-4 right-4">
+    <ResultCard
+      key={item.id}
+      imageSrc={item.img}
+      imageAlt={item.name}
+      imageHeight="h-40"
+      tint={tint}
+      badge={<span className="text-[10px] font-bold bg-white/15 backdrop-blur text-white px-2 py-0.5 rounded-full border border-white/15">{item.tag}</span>}
+      overlay={
+        <div>
           <div className="font-bold text-white text-sm mb-0.5 leading-tight">{item.name}</div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-[10px] text-white/70"><MapPin className="h-2.5 w-2.5" />{item.loc}<Clock className="h-2.5 w-2.5 ml-1" />{item.duration}</div>
-            <span className="flex items-center gap-1 text-amber font-bold text-xs"><Star className="h-3 w-3 fill-amber" />{item.rating}</span>
           </div>
         </div>
-      </div>
-      <div className="px-4 py-3 flex items-center justify-between">
-        <div><div className="font-display font-bold text-lg text-ink">{item.price}</div><div className="text-[10px] text-ink-faint">Instant confirmation</div></div>
-        <div className="flex gap-2">
-          <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-teal to-blue text-white text-xs font-bold hover:brightness-110 shadow-sm">Book</button>
-        </div>
-      </div>
-    </motion.div>
+      }
+      price={item.price}
+      ratingValue={item.rating}
+      metaText="Instant confirmation"
+      ctaLabel="Book"
+      onReview={() => onReview(item)}
+      onBook={() => onBook(item)}
+    />
   );
 }
+
+const CARD_RENDERERS = {
+  flights: renderFlightCard,
+  trains: renderTrainCard,
+  hotels: renderHotelCard,
+  hostels: renderHostelCard,
+  activities: renderActivityCard,
+};
 
 /* ── MAIN ── */
 export default function BookingSystem() {
@@ -313,6 +324,12 @@ export default function BookingSystem() {
   const [mapZoom, setMapZoom] = useState(4);
   const [selectedDest, setSelectedDest] = useState(null);
   const [showAllDests, setShowAllDests] = useState(false);
+
+  const [fromCity, setFromCity] = useState("");
+  const [toCity, setToCity] = useState("");
+  const [travelDate, setTravelDate] = useState("2026-11-14");
+  const [guestCount, setGuestCount] = useState(1);
+  const destinationsRef = useRef(null);
 
   const filteredDests = useMemo(() => {
     let d = ALL_DESTINATIONS;
@@ -335,101 +352,92 @@ export default function BookingSystem() {
     if (viewMode !== "map") setViewMode("map");
   };
 
-  const toggleLike = (id) => {
-    setLikedDests(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const handleSearch = () => {
+    const query = toCity.trim() || fromCity.trim();
+    setSearchQuery(query);
+    destinationsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
     <div className="min-h-screen bg-page-soft">
 
       {/* ── HERO ── */}
-      <div className="relative overflow-hidden rounded-[2rem] mb-8"
-        style={{ background: "linear-gradient(135deg, #0b0f19 0%, #1a1040 50%, #0b1220 100%)" }}>
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-coral/20 rounded-full blur-3xl -translate-y-1/2" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-teal/15 rounded-full blur-3xl translate-y-1/2" />
-        <div className="relative z-10 px-6 md:px-12 pt-12 pb-8">
-          <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur border border-white/15 text-white/80 text-xs font-semibold px-4 py-1.5 rounded-full mb-4">
-              <Sparkles className="h-3.5 w-3.5 text-amber" />
-              AI-Powered · {ALL_DESTINATIONS.length}+ Destinations · One Platform
-            </div>
-            <h1 className="font-display font-extrabold text-white text-4xl md:text-5xl mb-3 tracking-tight">
-              Your Next Journey<br />
-              <span className="bg-gradient-to-r from-coral via-amber to-teal bg-clip-text text-transparent">Starts Here</span>
-            </h1>
-          </motion.div>
-
-          {/* Booking Tabs */}
-          <div className="flex justify-center mb-5 overflow-x-auto">
-            <div className="flex items-center gap-1 bg-white/10 backdrop-blur border border-white/15 p-1 rounded-2xl">
-              {TABS.map(tab => {
-                const Icon = tab.icon;
-                return (
-                  <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSelectedItemForReview(null); }}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id ? "bg-white text-slate-900 shadow-md" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
-                    <Icon className="h-3.5 w-3.5" />{tab.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.3 }}
-            className="max-w-4xl mx-auto">
-            <div className="bg-white/10 backdrop-blur border border-white/15 rounded-2xl p-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto_auto] gap-2">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-                <input placeholder="From (City / Airport)"
-                  className="w-full bg-white/10 border border-white/10 rounded-xl pl-9 pr-3 py-3 text-white placeholder:text-white/40 text-sm outline-none focus:border-coral/50 focus:ring-1 focus:ring-coral/20 transition" />
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-coral/70" />
-                <input placeholder="To (Destination)"
-                  className="w-full bg-white/10 border border-white/10 rounded-xl pl-9 pr-3 py-3 text-white placeholder:text-white/40 text-sm outline-none focus:border-teal/50 focus:ring-1 focus:ring-teal/20 transition" />
-              </div>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-                <input type="date" defaultValue="2026-11-14"
-                  className="bg-white/10 border border-white/10 rounded-xl pl-9 pr-3 py-3 text-white text-sm outline-none focus:border-blue/50 transition [color-scheme:dark]" />
-              </div>
-              <div className="relative">
-                <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-                <select className="bg-white/10 border border-white/10 rounded-xl pl-9 pr-3 py-3 text-white text-sm outline-none appearance-none focus:border-amber/50 transition [color-scheme:dark]">
-                  {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n===1?"Person":"People"}</option>)}
-                </select>
-              </div>
-              <button className="px-6 py-3 rounded-xl bg-gradient-to-r from-coral to-pink text-white font-bold text-sm hover:brightness-110 shadow-[0_4px_20px_-4px_rgba(255,79,94,0.5)] flex items-center gap-2 justify-center whitespace-nowrap">
-                <Search className="h-4 w-4" /> Search
-              </button>
-            </div>
-          </motion.div>
-
-          <div className="flex items-center justify-center gap-6 mt-5 flex-wrap">
-            {[{icon:Zap,label:"Instant Confirmation"},{icon:Shield,label:"100% Secure"},{icon:TrendingUp,label:"Best Price Guarantee"}].map(b => (
-              <div key={b.label} className="flex items-center gap-1.5 text-white/50 text-xs font-medium">
-                <b.icon className="h-3.5 w-3.5 text-teal" />{b.label}
-              </div>
-            ))}
+      <DarkPromoBanner
+        className="mb-8"
+        eyebrow={<><Sparkles className="h-3.5 w-3.5 text-brand" />AI-Powered · {ALL_DESTINATIONS.length}+ Destinations · One Platform</>}
+        heading={<>Your Next Journey<br /><span className="text-brand">Starts Here</span></>}
+      >
+        {/* Booking Tabs */}
+        <div className="flex justify-center mb-5 overflow-x-auto">
+          <div className="flex items-center gap-1 bg-white/8 border border-white/12 p-1 rounded-md">
+            {TABS.map(tab => {
+              const Icon = tab.icon;
+              return (
+                <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSelectedItemForReview(null); }}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-sm text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id ? "bg-white text-ink shadow-sm" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
+                  <Icon className="h-3.5 w-3.5" />{tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </div>
+
+        {/* Search Bar */}
+        <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}
+          className="max-w-4xl mx-auto">
+          <div className="bg-white/8 border border-white/12 rounded-md p-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto_auto] gap-2">
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+              <input value={fromCity} onChange={e => setFromCity(e.target.value)} placeholder="From (City / Airport)"
+                className="w-full bg-white/8 border border-white/10 rounded-sm pl-9 pr-3 py-3 text-white placeholder:text-white/40 text-sm outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition" />
+            </div>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-brand/80" />
+              <input value={toCity} onChange={e => setToCity(e.target.value)} placeholder="To (Destination)"
+                className="w-full bg-white/8 border border-white/10 rounded-sm pl-9 pr-3 py-3 text-white placeholder:text-white/40 text-sm outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20 transition" />
+            </div>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+              <input type="date" value={travelDate} onChange={e => setTravelDate(e.target.value)}
+                className="bg-white/8 border border-white/10 rounded-sm pl-9 pr-3 py-3 text-white text-sm outline-none focus:border-brand/50 transition [color-scheme:dark]" />
+            </div>
+            <div className="relative">
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
+              <select value={guestCount} onChange={e => setGuestCount(Number(e.target.value))}
+                className="bg-white/8 border border-white/10 rounded-sm pl-9 pr-3 py-3 text-white text-sm outline-none appearance-none focus:border-brand/50 transition [color-scheme:dark]">
+                {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n===1?"Person":"People"}</option>)}
+              </select>
+            </div>
+            <button onClick={handleSearch} className="px-6 py-3 rounded-sm bg-brand text-brand-ink font-bold text-sm hover:brightness-105 shadow-sm flex items-center gap-2 justify-center whitespace-nowrap">
+              <Search className="h-4 w-4" /> Search
+            </button>
+          </div>
+        </motion.div>
+
+        <div className="flex items-center justify-center gap-6 mt-5 flex-wrap">
+          {[{icon:Zap,label:"Instant Confirmation"},{icon:Shield,label:"100% Secure"},{icon:TrendingUp,label:"Best Price Guarantee"}].map(b => (
+            <div key={b.label} className="flex items-center gap-1.5 text-white/50 text-xs font-medium">
+              <b.icon className="h-3.5 w-3.5 text-brand" />{b.label}
+            </div>
+          ))}
+        </div>
+      </DarkPromoBanner>
 
       <div className="space-y-10">
 
         {/* ── AI SUGGESTIONS ── */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-coral to-pink flex items-center justify-center shadow-[0_0_16px_rgba(255,79,94,0.4)]">
-              <Sparkles className="h-4 w-4 text-white" />
+            <div className="h-8 w-8 rounded-sm bg-brand flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-brand-ink" />
             </div>
-            <h2 className="font-display font-bold text-lg text-ink">AI Travel Insights</h2>
-            <span className="text-[10px] font-bold text-teal border border-teal/20 bg-teal-dim/20 px-2 py-0.5 rounded-full">Recoup AI</span>
+            <h2 className="font-display font-medium text-lg text-ink">AI Travel Insights</h2>
+            <span className="text-[10px] font-bold text-status-resolved border border-status-resolved/20 bg-status-resolved-dim px-2 py-0.5 rounded-full">Recoup AI</span>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {AI_SUGGESTIONS.map((s, i) => (
-              <motion.div key={i} initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.08 }}
-                className="bg-page rounded-2xl border border-border p-4 shadow-sm hover:border-coral/30 transition-all cursor-pointer group">
+              <motion.div key={i} initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.06 }}
+                className="bg-surface rounded-md border border-border p-4 shadow-sm hover:border-brand/30 transition-all cursor-pointer group">
                 <div className="text-xl mb-2">{s.icon}</div>
                 <p className="text-xs text-ink-dim leading-relaxed group-hover:text-ink transition">{s.text}</p>
               </motion.div>
@@ -440,18 +448,17 @@ export default function BookingSystem() {
         {/* ── RESULTS ── */}
         <div>
           <div className="flex items-center justify-between mb-5">
-            <h2 className="font-display font-bold text-xl text-ink">
+            <h2 className="font-display font-medium text-xl text-ink">
               {TABS.find(t => t.id === activeTab)?.label} — Top Picks
             </h2>
             <span className="text-xs text-ink-faint">{currentResults.length} results · AI-sorted</span>
           </div>
           <div className="grid lg:grid-cols-[1fr_360px] gap-8">
             <div className={`grid gap-4 ${activeTab === "activities" ? "sm:grid-cols-2" : "grid-cols-1"}`}>
-              {activeTab === "flights"    && currentResults.map(i => <FlightCard   key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "flights" })} />)}
-              {activeTab === "trains"     && currentResults.map(i => <TrainCard    key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "trains" })} />)}
-              {activeTab === "hotels"     && currentResults.map(i => <HotelCard    key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "hotels" })} />)}
-              {activeTab === "hostels"    && currentResults.map(i => <HostelCard   key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "hostels" })} />)}
-              {activeTab === "activities" && currentResults.map(i => <ActivityCard key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "activities" })} />)}
+              {currentResults.map(item => CARD_RENDERERS[activeTab](item, {
+                onReview: setSelectedItemForReview,
+                onBook: (it) => setBookingModal({ item: it, category: activeTab }),
+              }))}
             </div>
             <div className="hidden lg:block">
               <AnimatePresence mode="wait">
@@ -460,7 +467,7 @@ export default function BookingSystem() {
                     <Reviews itemId={selectedItemForReview.id} itemName={selectedItemForReview.name || selectedItemForReview.title} />
                   </motion.div>
                 ) : (
-                  <motion.div className="sticky top-6 rounded-2xl border border-dashed border-border p-8 text-center flex flex-col items-center justify-center h-64">
+                  <motion.div className="sticky top-6 rounded-md border border-dashed border-border p-8 text-center flex flex-col items-center justify-center h-64">
                     <MessageSquare className="h-10 w-10 text-ink-faint/30 mb-3" />
                     <p className="text-sm text-ink-faint">Click "Reviews" on any card to see traveler feedback</p>
                   </motion.div>
@@ -471,11 +478,11 @@ export default function BookingSystem() {
         </div>
 
         {/* ── DESTINATIONS: SEARCH + FILTER + GRID/MAP ── */}
-        <div>
+        <div ref={destinationsRef}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
             <div>
-              <h2 className="font-display font-bold text-xl text-ink flex items-center gap-2">
-                <Globe className="h-5 w-5 text-blue" /> {ALL_DESTINATIONS.length}+ Destinations Worldwide
+              <h2 className="font-display font-medium text-xl text-ink flex items-center gap-2">
+                <Globe className="h-5 w-5 text-brand" /> {ALL_DESTINATIONS.length}+ Destinations Worldwide
               </h2>
               <p className="text-xs text-ink-dim mt-0.5">Handpicked from India and across the globe</p>
             </div>
@@ -485,13 +492,13 @@ export default function BookingSystem() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ink-faint" />
                 <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search destination…"
-                  className="pl-9 pr-3 py-2 rounded-xl bg-surface-sunk/50 border border-border text-xs text-ink focus:outline-none focus:border-blue/50 transition w-44" />
+                  className="pl-9 pr-3 py-2 rounded-sm bg-surface-sunk border border-border text-xs text-ink focus:outline-none focus:border-brand/50 transition w-44" />
                 {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink"><X className="h-3 w-3" /></button>}
               </div>
               {/* View toggle */}
-              <div className="flex items-center gap-1 bg-surface-sunk p-1 rounded-xl border border-border">
-                <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded-lg transition ${viewMode==="grid" ? "bg-page shadow-sm text-ink" : "text-ink-dim hover:text-ink"}`}><List className="h-3.5 w-3.5" /></button>
-                <button onClick={() => setViewMode("map")} className={`p-1.5 rounded-lg transition ${viewMode==="map" ? "bg-page shadow-sm text-ink" : "text-ink-dim hover:text-ink"}`}><Map className="h-3.5 w-3.5" /></button>
+              <div className="flex items-center gap-1 bg-surface-sunk p-1 rounded-sm border border-border">
+                <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded-sm transition ${viewMode==="grid" ? "bg-surface shadow-sm text-ink" : "text-ink-dim hover:text-ink"}`}><List className="h-3.5 w-3.5" /></button>
+                <button onClick={() => setViewMode("map")} className={`p-1.5 rounded-sm transition ${viewMode==="map" ? "bg-surface shadow-sm text-ink" : "text-ink-dim hover:text-ink"}`}><Map className="h-3.5 w-3.5" /></button>
               </div>
             </div>
           </div>
@@ -500,7 +507,7 @@ export default function BookingSystem() {
           <div className="flex items-center gap-2 flex-wrap mb-5">
             {REGIONS.map(r => (
               <button key={r} onClick={() => setSelectedRegion(r)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${selectedRegion === r ? "bg-ink text-page border-ink shadow-sm" : "bg-page border-border text-ink-dim hover:text-ink hover:border-border-strong"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${selectedRegion === r ? "bg-ink text-page border-ink shadow-sm" : "bg-surface border-border text-ink-dim hover:text-ink hover:border-border-strong"}`}>
                 {r}
               </button>
             ))}
@@ -513,20 +520,20 @@ export default function BookingSystem() {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 {displayDests.map((d, i) => (
                   <motion.div key={d.id} initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay: Math.min(i*0.04, 0.5) }}
-                    className="group relative rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-shadow"
+                    className="group relative rounded-md overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow"
                     style={{ aspectRatio:"3/4" }} onClick={() => handleDestClick(d)}>
-                    <img src={d.img} alt={d.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <img src={d.img} alt={d.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
                     <button onClick={e => { e.stopPropagation(); toggleSaved(d.id); }}
                       className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/30 backdrop-blur flex items-center justify-center hover:bg-black/50 transition">
-                      <Heart className={`h-3.5 w-3.5 ${savedDestinations.includes(d.id) ? "fill-pink text-pink" : "text-white"}`} />
+                      <Heart className={`h-3.5 w-3.5 ${savedDestinations.includes(d.id) ? "fill-status-disrupted text-status-disrupted" : "text-white"}`} />
                     </button>
-                    {d.popular && <div className="absolute top-2 left-2 text-[9px] font-bold bg-amber text-black px-1.5 py-0.5 rounded-full">🔥 Popular</div>}
+                    {d.popular && <div className="absolute top-2 left-2 text-[9px] font-bold bg-brand text-brand-ink px-1.5 py-0.5 rounded-full">🔥 Popular</div>}
                     <div className="absolute bottom-0 left-0 right-0 p-3">
                       <div className="text-[9px] font-semibold text-white/70 mb-0.5">{d.tag}</div>
                       <div className="text-sm font-bold text-white leading-tight">{d.name}</div>
                       <div className="text-[9px] text-white/60">{d.country} · {d.temp}</div>
-                      <div className="text-[10px] font-bold text-amber mt-0.5">{d.price}</div>
+                      <div className="text-[10px] font-bold text-brand mt-0.5">{d.price}</div>
                     </div>
                   </motion.div>
                 ))}
@@ -534,7 +541,7 @@ export default function BookingSystem() {
               {filteredDests.length > 12 && (
                 <div className="text-center mt-6">
                   <button onClick={() => setShowAllDests(!showAllDests)}
-                    className="px-8 py-3 rounded-2xl border-2 border-border hover:border-ink text-ink font-semibold text-sm transition-all hover:bg-surface-sunk">
+                    className="px-8 py-3 rounded-md border-2 border-border hover:border-ink text-ink font-semibold text-sm transition-all hover:bg-surface-sunk">
                     {showAllDests ? "Show Less" : `Show All ${filteredDests.length} Destinations`} <ChevronRight className={`inline h-4 w-4 ml-1 transition-transform ${showAllDests ? "rotate-90" : ""}`} />
                   </button>
                 </div>
@@ -544,7 +551,7 @@ export default function BookingSystem() {
 
           {/* Map View */}
           {viewMode === "map" && (
-            <div className="relative rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: "600px" }}>
+            <div className="relative rounded-md overflow-hidden border border-border shadow-sm" style={{ height: "600px" }}>
               <MapContainer center={mapCenter} zoom={mapZoom} className="h-full w-full" zoomControl={true}>
                 <TileLayer
                   attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -558,7 +565,7 @@ export default function BookingSystem() {
                         <img src={d.img} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2" />
                         <div className="font-bold text-sm">{d.name}</div>
                         <div className="text-xs text-gray-500">{d.country} · {d.temp}</div>
-                        <div className="text-xs font-bold text-orange-500 mt-1">{d.price}</div>
+                        <div className="text-xs font-bold mt-1" style={{ color: "#a9791f" }}>{d.price}</div>
                         <div className="text-[10px] text-gray-400 mt-0.5">{d.tag}</div>
                       </div>
                     </Popup>
@@ -566,7 +573,7 @@ export default function BookingSystem() {
                 ))}
               </MapContainer>
               {/* Map Legend */}
-              <div className="absolute bottom-4 left-4 bg-page/95 backdrop-blur rounded-xl border border-border p-3 shadow-lg">
+              <div className="absolute bottom-4 left-4 bg-surface/95 backdrop-blur rounded-sm border border-border p-3 shadow-md">
                 <div className="text-xs font-bold text-ink mb-1">{filteredDests.length} destinations shown</div>
                 <div className="text-[10px] text-ink-dim">Click any pin for details</div>
               </div>
@@ -576,19 +583,15 @@ export default function BookingSystem() {
 
         {/* ── BOTTOM CTA ── */}
         <div className="pb-8">
-          <div className="relative overflow-hidden rounded-3xl p-8 md:p-12 text-center"
-            style={{ background: "linear-gradient(135deg, #1a1040, #0b1220)" }}>
-            <div className="absolute top-0 left-0 w-64 h-64 bg-coral/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-            <div className="absolute bottom-0 right-0 w-64 h-64 bg-teal/20 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
-            <div className="relative z-10">
-              <div className="text-3xl mb-3">🛡️</div>
-              <h2 className="font-display font-extrabold text-white text-2xl md:text-3xl mb-2">Every Booking Protected by Recoup AI</h2>
-              <p className="text-white/60 max-w-lg mx-auto text-sm mb-6">Flight delayed? Hotel changed? Our AI recovers your entire itinerary automatically at zero hassle.</p>
-              <button className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-coral to-pink text-white font-bold hover:brightness-110 shadow-[0_8px_24px_-8px_rgba(255,79,94,0.6)]">
-                Plan Your Protected Trip <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          <DarkPromoBanner
+            contentClassName="px-8 md:px-12 py-12 text-center"
+            heading={<>Every Booking Protected<br />by <span className="text-brand">Recoup AI</span></>}
+            subtext="Flight delayed? Hotel changed? Our AI recovers your entire itinerary automatically at zero hassle."
+          >
+            <button className="inline-flex items-center gap-2 px-8 py-3.5 rounded-sm bg-brand text-brand-ink font-bold hover:brightness-105 shadow-sm">
+              Plan Your Protected Trip <ArrowRight className="h-4 w-4" />
+            </button>
+          </DarkPromoBanner>
         </div>
       </div>
 

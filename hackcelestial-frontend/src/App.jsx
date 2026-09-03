@@ -10,9 +10,10 @@ import ConciergeCopilotModal from "./components/ConciergeCopilotModal";
 import Login from "./components/Login";
 import BookingSystem from "./components/BookingSystem";
 import Suggestions from "./components/Suggestions";
+import MyBookingsModal from "./components/MyBookingsModal";
 import { useItineraryEngine } from "./hooks/useItineraryEngine";
 import { useAuth } from "./context/AuthContext";
-import { Loader2, Home, Compass, MessageSquarePlus } from "lucide-react";
+import { Loader2, Home, Compass, MessageSquarePlus, ArrowLeft } from "lucide-react";
 
 export default function App() {
   const {
@@ -22,6 +23,7 @@ export default function App() {
     disruptionTypes,
     atRiskIds,
     loading,
+    loadError,
     triggering,
     applying,
     travelerPreference,
@@ -38,6 +40,7 @@ export default function App() {
     appliedDiffs,
     financialSummary,
     switchTrip,
+    load,
     trigger,
     applyPlan,
     dismiss,
@@ -47,6 +50,7 @@ export default function App() {
   const { user, loading: authLoading, logout } = useAuth();
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [mainTab, setMainTab] = useState("booking");
+  const [myBookingsOpen, setMyBookingsOpen] = useState(false);
 
   useEffect(() => {
     if (trip && trip.bookings && trip.bookings.length > 0) {
@@ -76,7 +80,7 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-page-soft">
-        <Loader2 className="h-8 w-8 text-coral animate-spin" />
+        <Loader2 className="h-8 w-8 text-brand animate-spin" />
       </div>
     );
   }
@@ -85,11 +89,28 @@ export default function App() {
     return <Login />;
   }
 
+  if (!loading && loadError && !trip) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-page-soft px-4">
+        <div className="flex flex-col items-center gap-3 text-center max-w-sm">
+          <p className="text-sm font-semibold text-ink">Couldn't reach the Recoup engine</p>
+          <p className="text-xs text-ink-dim">{loadError}</p>
+          <button
+            onClick={() => load(activeTripId)}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full bg-ink text-page hover:opacity-90 transition"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading || !trip) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-page-soft">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 text-coral animate-spin" />
+          <Loader2 className="h-8 w-8 text-brand animate-spin" />
           <p className="text-xs font-semibold text-ink-dim">
             Loading Recoup Travel Resilience Engine…
           </p>
@@ -111,27 +132,28 @@ export default function App() {
         disruptedCount={disruptedCount}
         onReset={reset}
         onOpenCopilot={() => setIsCopilotOpen(true)}
+        onOpenMyBookings={() => setMyBookingsOpen(true)}
         onLogout={logout}
       />
 
       {/* Global Navigation Tabs */}
       <div className="max-w-[1240px] mx-auto px-4 md:px-8 -mt-10 mb-8 relative z-10">
-        <div className="flex items-center gap-2 bg-surface backdrop-blur-md p-1.5 rounded-2xl border border-border inline-flex shadow-sm">
-          <button 
+        <div className="flex items-center gap-2 bg-surface p-1.5 rounded-md border border-border inline-flex shadow-md">
+          <button
             onClick={() => setMainTab("dashboard")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${mainTab === "dashboard" ? "bg-ink text-page shadow-md" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+            className={`flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-bold transition-all ${mainTab === "dashboard" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
           >
             <Home className="h-4 w-4" /> Itinerary Dashboard
           </button>
-          <button 
+          <button
             onClick={() => setMainTab("booking")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${mainTab === "booking" ? "bg-ink text-page shadow-md" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+            className={`flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-bold transition-all ${mainTab === "booking" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
           >
             <Compass className="h-4 w-4" /> Explore & Book
           </button>
-          <button 
+          <button
             onClick={() => setMainTab("suggestions")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all ${mainTab === "suggestions" ? "bg-ink text-page shadow-md" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+            className={`flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-bold transition-all ${mainTab === "suggestions" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
           >
             <MessageSquarePlus className="h-4 w-4" /> Trip Suggestions
           </button>
@@ -144,7 +166,7 @@ export default function App() {
         {mainTab === "suggestions" && <Suggestions destination={trip.tripName} />}
         
         {mainTab === "dashboard" && (
-        <div className="bg-page rounded-[2rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.15)] px-4 md:px-8 py-4 grid lg:grid-cols-[1fr_420px] gap-8">
+        <div className="bg-page rounded-lg shadow-md px-4 md:px-8 py-4 grid lg:grid-cols-[1fr_420px] gap-8">
           {/* Main Visualizer Area */}
           <section className="pt-4 pb-6">
             <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
@@ -264,6 +286,8 @@ export default function App() {
         resolvedPlan={resolvedPlan}
         trip={trip}
       />
+
+      {myBookingsOpen && <MyBookingsModal onClose={() => setMyBookingsOpen(false)} />}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Poppins", sans-serif;
+  --font-display: "Fraunces", serif;
   --font-sans: "Inter", sans-serif;
 
   --color-page: var(--page);
@@ -15,66 +15,117 @@
   --color-ink-dim: var(--ink-dim);
   --color-ink-faint: var(--ink-faint);
 
-  --color-coral: var(--coral);
-  --color-coral-dim: var(--coral-dim);
-  --color-teal: var(--teal);
-  --color-teal-dim: var(--teal-dim);
-  --color-amber: var(--amber);
-  --color-amber-dim: var(--amber-dim);
-  --color-pink: var(--pink);
-  --color-pink-dim: var(--pink-dim);
-  --color-blue: var(--blue);
-  --color-blue-dim: var(--blue-dim);
+  --color-brand: var(--brand);
+  --color-brand-dim: var(--brand-dim);
+  --color-brand-ink: var(--brand-ink);
+
+  --color-status-risk: var(--status-risk);
+  --color-status-risk-dim: var(--status-risk-dim);
+  --color-status-disrupted: var(--status-disrupted);
+  --color-status-disrupted-dim: var(--status-disrupted-dim);
+  --color-status-resolved: var(--status-resolved);
+  --color-status-resolved-dim: var(--status-resolved-dim);
+
+  --color-flight: var(--cat-flight);
+  --color-train: var(--cat-train);
+  --color-hotel: var(--cat-hotel);
+  --color-hostel: var(--cat-hostel);
+  --color-activity: var(--cat-activity);
+
+  /* Legacy accent aliases kept during the redesign migration; components are
+     being moved onto --color-brand / --color-status-* / --color-cat-* above. */
+  --color-coral: var(--brand);
+  --color-coral-dim: var(--brand-dim);
+  --color-teal: var(--status-resolved);
+  --color-teal-dim: var(--status-resolved-dim);
+  --color-amber: var(--status-risk);
+  --color-amber-dim: var(--status-risk-dim);
+  --color-pink: var(--status-disrupted);
+  --color-pink-dim: var(--status-disrupted-dim);
+  --color-blue: var(--cat-flight);
+  --color-blue-dim: var(--cat-flight-dim);
+
+  --radius-sm: 0.625rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+
+  --shadow-sm: 0 1px 2px rgba(28, 26, 23, 0.06), 0 1px 1px rgba(28, 26, 23, 0.04);
+  --shadow-md: 0 12px 28px -12px rgba(28, 26, 23, 0.18), 0 4px 10px -6px rgba(28, 26, 23, 0.1);
 }
 
 :root {
-  /* LIGHT MODE VARIABLES */
-  --page: #f0f4f8;
-  --page-soft: #e2e8f0;
-  --surface: rgba(255, 255, 255, 0.7);
-  --surface-sunk: rgba(0, 0, 0, 0.05);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.15);
+  /* LIGHT MODE — warm editorial neutrals */
+  --page: #f7f5f0;
+  --page-soft: #efebe2;
+  --surface: #ffffff;
+  --surface-sunk: rgba(28, 26, 23, 0.04);
+  --border: rgba(28, 26, 23, 0.09);
+  --border-strong: rgba(28, 26, 23, 0.16);
 
-  --ink: #0f172a;
-  --ink-dim: #475569;
-  --ink-faint: #94a3b8;
+  --ink: #1c1a17;
+  --ink-dim: #5b564c;
+  --ink-faint: #9b948a;
 
-  --coral: #ef4444;
-  --coral-dim: rgba(239, 68, 68, 0.15);
-  --teal: #0d9488;
-  --teal-dim: rgba(13, 148, 136, 0.15);
-  --amber: #f59e0b;
-  --amber-dim: rgba(245, 158, 11, 0.15);
-  --pink: #db2777;
-  --pink-dim: rgba(219, 39, 119, 0.15);
-  --blue: #2563eb;
-  --blue-dim: rgba(37, 99, 235, 0.15);
+  /* Brand — brass/gold, the single signature accent */
+  --brand: #a9791f;
+  --brand-dim: rgba(169, 121, 31, 0.14);
+  --brand-ink: #ffffff;
+
+  /* Semantic status — the 4 states the disruption engine renders */
+  --status-risk: #b4740e;
+  --status-risk-dim: rgba(180, 116, 14, 0.14);
+  --status-disrupted: #c23b3b;
+  --status-disrupted-dim: rgba(194, 59, 59, 0.12);
+  --status-resolved: #12786b;
+  --status-resolved-dim: rgba(18, 120, 107, 0.13);
+
+  /* Booking category tints */
+  --cat-flight: #3369a8;
+  --cat-flight-dim: rgba(51, 105, 168, 0.12);
+  --cat-train: #6a4f9e;
+  --cat-train-dim: rgba(106, 79, 158, 0.12);
+  --cat-hotel: #a9791f;
+  --cat-hotel-dim: rgba(169, 121, 31, 0.14);
+  --cat-hostel: #b8592f;
+  --cat-hostel-dim: rgba(184, 89, 47, 0.12);
+  --cat-activity: #12786b;
+  --cat-activity-dim: rgba(18, 120, 107, 0.13);
 }
 
 .dark {
-  /* DARK MODE VARIABLES (From Original) */
-  --page: #0b0f19;
-  --page-soft: #121827;
-  --surface: rgba(11, 15, 25, 0.85);
-  --surface-sunk: rgba(0, 0, 0, 0.4);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.15);
+  /* DARK MODE — warm charcoal neutrals, same brand identity */
+  --page: #14120f;
+  --page-soft: #1a1713;
+  --surface: #1e1b17;
+  --surface-sunk: rgba(0, 0, 0, 0.22);
+  --border: rgba(245, 241, 234, 0.09);
+  --border-strong: rgba(245, 241, 234, 0.16);
 
-  --ink: #f8fafc;
-  --ink-dim: #cbd5e1;
-  --ink-faint: #94a3b8;
+  --ink: #f5f1ea;
+  --ink-dim: #c9c2b6;
+  --ink-faint: #8a8377;
 
-  --coral: #ff4f5e;
-  --coral-dim: rgba(255, 79, 94, 0.15);
-  --teal: #00f0ff;
-  --teal-dim: rgba(0, 240, 255, 0.15);
-  --amber: #ffb400;
-  --amber-dim: rgba(255, 180, 0, 0.15);
-  --pink: #e31c5f;
-  --pink-dim: rgba(227, 28, 95, 0.15);
-  --blue: #3b82f6;
-  --blue-dim: rgba(59, 130, 246, 0.15);
+  --brand: #e8b44c;
+  --brand-dim: rgba(232, 180, 76, 0.16);
+  --brand-ink: #1c1a17;
+
+  --status-risk: #e8a93d;
+  --status-risk-dim: rgba(232, 169, 61, 0.16);
+  --status-disrupted: #ff6b6b;
+  --status-disrupted-dim: rgba(255, 107, 107, 0.15);
+  --status-resolved: #2dd4bf;
+  --status-resolved-dim: rgba(45, 212, 191, 0.15);
+
+  --cat-flight: #6fa4e0;
+  --cat-flight-dim: rgba(111, 164, 224, 0.16);
+  --cat-train: #a996db;
+  --cat-train-dim: rgba(169, 150, 219, 0.16);
+  --cat-hotel: #e8b44c;
+  --cat-hotel-dim: rgba(232, 180, 76, 0.16);
+  --cat-hostel: #e08a5f;
+  --cat-hostel-dim: rgba(224, 138, 95, 0.16);
+  --cat-activity: #2dd4bf;
+  --cat-activity-dim: rgba(45, 212, 191, 0.15);
 }
 
 html, body, #root {
@@ -86,21 +137,21 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Base Glass panel utility */
+/* Chrome-over-imagery panel only — translucent + blurred, sits on a photo.
+   Everything else should be a solid surface (bg-surface + border + shadow). */
 .glass-panel {
-  background: var(--color-surface);
+  background: rgba(20, 18, 15, 0.32);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  transition: background-color 0.4s ease, border-color 0.4s ease;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: var(--shadow-md);
 }
 
 ::selection {
-  background-color: var(--color-coral-dim);
+  background-color: var(--color-brand-dim);
   color: var(--color-ink);
 }
 

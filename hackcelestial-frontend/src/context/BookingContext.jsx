@@ -31,9 +31,17 @@ export function BookingProvider({ children }) {
   };
 
   const removeBooking = async (bookingId) => {
+    const removed = confirmedBookings.find(b => b.id === bookingId);
     const updated = confirmedBookings.filter(b => b.id !== bookingId);
     setConfirmedBookings(updated);
     localStorage.setItem("recoup_bookings", JSON.stringify(updated));
+
+    if (user?.uid && removed) {
+      try {
+        const ref = doc(db, "users", user.uid);
+        await updateDoc(ref, { bookings: arrayRemove(removed) });
+      } catch (e) { console.warn("Firestore removal failed, removed locally", e); }
+    }
   };
 
   const toggleSaved = async (destId) => {

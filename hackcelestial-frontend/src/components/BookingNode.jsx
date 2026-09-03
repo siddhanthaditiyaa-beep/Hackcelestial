@@ -48,10 +48,10 @@ export default function BookingNode({
           onClick={() => onSelect?.(booking.id)}
           whileHover={{ y: -3 }}
           whileTap={{ scale: 0.995 }}
-          className={`w-full text-left rounded-3xl border bg-surface overflow-hidden transition-colors cursor-pointer ${
+          className={`w-full text-left rounded-lg border bg-surface overflow-hidden transition-all cursor-pointer ${
             isSelected
-              ? "border-coral shadow-[0_12px_28px_-10px_rgba(255,90,95,0.4)] ring-2 ring-coral/20"
-              : "border-border hover:border-border-strong shadow-[0_2px_10px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_14px_30px_-12px_rgba(0,0,0,0.18)]"
+              ? "border-brand shadow-md ring-2 ring-brand/20"
+              : "border-border hover:border-border-strong shadow-sm hover:shadow-md"
           }`}
         >
           {/* Destination photo banner */}
@@ -65,18 +65,18 @@ export default function BookingNode({
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
 
             <div className="absolute top-3 left-3 h-9 w-9 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm">
-              <Icon className="h-4.5 w-4.5 text-slate-900" strokeWidth={2} />
+              <Icon className="h-4.5 w-4.5 text-ink" strokeWidth={2} />
             </div>
 
             <div className="absolute top-3 right-3 flex items-center gap-1.5">
               {isProactivelyAtRisk && booking.status === "confirmed" && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-white/95 text-amber shadow-sm">
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-white/95 text-status-risk shadow-sm">
                   <AlertTriangle className="h-2.5 w-2.5" />
                   tight buffer ({booking.bufferMinutes}m)
                 </span>
               )}
               {booking.recoveryPlanApplied && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-teal text-white dark:text-slate-900 shadow-sm">
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-status-resolved text-white shadow-sm">
                   <Sparkles className="h-2.5 w-2.5" />
                   Recovered
                 </span>
@@ -126,7 +126,7 @@ export default function BookingNode({
 
             <span
               className={`inline-flex items-center gap-1 text-[11px] font-medium shrink-0 ${
-                freeCancellation ? "text-teal" : "text-ink-faint"
+                freeCancellation ? "text-status-resolved" : "text-ink-faint"
               }`}
             >
               {freeCancellation ? (

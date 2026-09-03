@@ -28,14 +28,6 @@ export const TYPE_LABEL = {
   activity: "Experience",
 };
 
-export const TYPE_GRADIENT = {
-  flight: "linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)",
-  train: "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
-  hotel: "linear-gradient(135deg, #fbbf6d 0%, #ff5a5f 100%)",
-  transfer: "linear-gradient(135deg, #34d399 0%, #00a699 100%)",
-  activity: "linear-gradient(135deg, #c084fc 0%, #e31c5f 100%)",
-};
-
 export const STATUS_STYLES = {
   confirmed: {
     badgeBg: "bg-surface-sunk",
@@ -44,23 +36,31 @@ export const STATUS_STYLES = {
     label: "On track",
   },
   "at-risk": {
-    badgeBg: "bg-amber-dim",
-    badgeText: "text-amber",
-    dot: "bg-amber",
+    badgeBg: "bg-status-risk-dim",
+    badgeText: "text-status-risk",
+    dot: "bg-status-risk",
     label: "At risk",
   },
   disrupted: {
-    badgeBg: "bg-pink-dim",
-    badgeText: "text-pink",
-    dot: "bg-pink",
+    badgeBg: "bg-status-disrupted-dim",
+    badgeText: "text-status-disrupted",
+    dot: "bg-status-disrupted",
     label: "Disrupted",
   },
   resolved: {
-    badgeBg: "bg-teal-dim",
-    badgeText: "text-teal",
-    dot: "bg-teal",
+    badgeBg: "bg-status-resolved-dim",
+    badgeText: "text-status-resolved",
+    dot: "bg-status-resolved",
     label: "Resolved",
   },
+};
+
+export const CATEGORY_TINT = {
+  flight: { text: "text-flight", bg: "bg-flight", dim: "bg-flight/10", badgeBg: "bg-flight/90" },
+  train: { text: "text-train", bg: "bg-train", dim: "bg-train/10", badgeBg: "bg-train/90" },
+  hotel: { text: "text-hotel", bg: "bg-hotel", dim: "bg-hotel/10", badgeBg: "bg-hotel/90" },
+  hostel: { text: "text-hostel", bg: "bg-hostel", dim: "bg-hostel/10", badgeBg: "bg-hostel/90" },
+  activity: { text: "text-activity", bg: "bg-activity", dim: "bg-activity/10", badgeBg: "bg-activity/90" },
 };
 
 export const DISRUPTION_ICONS = {

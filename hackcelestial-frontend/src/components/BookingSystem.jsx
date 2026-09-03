@@ -6,9 +6,11 @@ import {
   Search, MapPin, Calendar, Users, Star, Plane, Building,
   MessageSquare, Train, Tent, Compass, Sparkles, ArrowRight,
   Clock, Zap, Shield, TrendingUp, ChevronRight, Heart, Map, List,
-  Globe, Filter, X
+  Globe, X
 } from "lucide-react";
 import Reviews from "./Reviews";
+import BookingModal from "./BookingModal";
+import { useBooking } from "../context/BookingContext";
 
 /* Fix Leaflet default icon */
 delete L.Icon.Default.prototype._getIconUrl;
@@ -27,8 +29,8 @@ const ALL_DESTINATIONS = [
   { id:"i4",  name:"Manali",         country:"India",       region:"South Asia",    lat:32.2432, lng:77.1892, img:"https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&q=80", tag:"🏔 Mountains",  temp:"8°C",  price:"From ₹2,900" },
   { id:"i5",  name:"Varanasi",       country:"India",       region:"South Asia",    lat:25.3176, lng:82.9739, img:"https://images.unsplash.com/photo-1561361058-c24cecae35ca?w=600&q=80", tag:"🕌 Spiritual",  temp:"26°C", price:"From ₹2,200" },
   { id:"i6",  name:"Andaman Islands",country:"India",       region:"South Asia",    lat:11.7401, lng:92.6586, img:"https://images.unsplash.com/photo-1586500036706-41963de24d8b?w=600&q=80", tag:"🏝 Island",     temp:"29°C", price:"From ₹6,800" },
-  { id:"i7",  name:"Leh Ladakh",     country:"India",       region:"South Asia",    lat:34.1526, lng:77.5771, img:"https://images.unsplash.com/photo-1600701434106-4ccaf64ac34e?w=600&q=80", tag:"🏔 Adventure",  temp:"5°C",  price:"From ₹5,200", popular:true },
-  { id:"i8",  name:"Darjeeling",     country:"India",       region:"South Asia",    lat:27.0360, lng:88.2627, img:"https://images.unsplash.com/photo-1583403765025-b53bab7d7715?w=600&q=80", tag:"☕ Hills",      temp:"12°C", price:"From ₹2,400" },
+  { id:"i7",  name:"Leh Ladakh",     country:"India",       region:"South Asia",    lat:34.1526, lng:77.5771, img:"https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80", tag:"🏔 Adventure",  temp:"5°C",  price:"From ₹5,200", popular:true },
+  { id:"i8",  name:"Darjeeling",     country:"India",       region:"South Asia",    lat:27.0360, lng:88.2627, img:"https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=600&q=80", tag:"☕ Hills",      temp:"12°C", price:"From ₹2,400" },
   { id:"i9",  name:"Jaipur",         country:"India",       region:"South Asia",    lat:26.9124, lng:75.7873, img:"https://images.unsplash.com/photo-1524613032530-449a5d94c285?w=600&q=80", tag:"🏰 Royal",      temp:"30°C", price:"From ₹3,200" },
   { id:"i10", name:"Mumbai",         country:"India",       region:"South Asia",    lat:19.0760, lng:72.8777, img:"https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?w=600&q=80", tag:"🌆 Metro",      temp:"30°C", price:"From ₹2,800" },
 
@@ -157,7 +159,7 @@ function MapFlyTo({ center, zoom }) {
 }
 
 /* ── CARD COMPONENTS ── */
-function FlightCard({ item, onReview }) {
+function FlightCard({ item, onReview, onBook }) {
   return (
     <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
       <div className="relative h-32 overflow-hidden">
@@ -182,14 +184,14 @@ function FlightCard({ item, onReview }) {
         </div>
         <div className="flex gap-2">
           <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-coral to-pink text-white text-xs font-bold hover:brightness-110 shadow-sm">Book</button>
+          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-coral to-pink text-white text-xs font-bold hover:brightness-110 shadow-sm">Book</button>
         </div>
       </div>
     </motion.div>
   );
 }
 
-function TrainCard({ item, onReview }) {
+function TrainCard({ item, onReview, onBook }) {
   return (
     <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
       <div className="relative h-28 overflow-hidden">
@@ -207,14 +209,14 @@ function TrainCard({ item, onReview }) {
         </div>
         <div className="flex gap-2">
           <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue to-teal text-white text-xs font-bold hover:brightness-110 shadow-sm">Book Seat</button>
+          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-blue to-teal text-white text-xs font-bold hover:brightness-110 shadow-sm">Book Seat</button>
         </div>
       </div>
     </motion.div>
   );
 }
 
-function HotelCard({ item, onReview }) {
+function HotelCard({ item, onReview, onBook }) {
   return (
     <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
       <div className="relative h-40 overflow-hidden">
@@ -235,7 +237,7 @@ function HotelCard({ item, onReview }) {
           <div><div className="text-[10px] text-ink-faint">from</div><div className="font-display font-bold text-lg text-ink">{item.price}</div></div>
           <div className="flex gap-2">
             <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-            <button className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber to-coral text-white text-xs font-bold hover:brightness-110 shadow-sm">Reserve</button>
+            <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber to-coral text-white text-xs font-bold hover:brightness-110 shadow-sm">Reserve</button>
           </div>
         </div>
       </div>
@@ -243,7 +245,7 @@ function HotelCard({ item, onReview }) {
   );
 }
 
-function HostelCard({ item, onReview }) {
+function HostelCard({ item, onReview, onBook }) {
   return (
     <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
       <div className="relative h-32 overflow-hidden">
@@ -265,14 +267,14 @@ function HostelCard({ item, onReview }) {
         </div>
         <div className="flex gap-2">
           <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink to-coral text-white text-xs font-bold hover:brightness-110 shadow-sm">Book Bed</button>
+          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-pink to-coral text-white text-xs font-bold hover:brightness-110 shadow-sm">Book Bed</button>
         </div>
       </div>
     </motion.div>
   );
 }
 
-function ActivityCard({ item, onReview }) {
+function ActivityCard({ item, onReview, onBook }) {
   return (
     <motion.div whileHover={{ y:-3 }} className="bg-page rounded-2xl border border-border shadow-sm overflow-hidden group">
       <div className="relative h-40 overflow-hidden">
@@ -291,7 +293,7 @@ function ActivityCard({ item, onReview }) {
         <div><div className="font-display font-bold text-lg text-ink">{item.price}</div><div className="text-[10px] text-ink-faint">Instant confirmation</div></div>
         <div className="flex gap-2">
           <button onClick={() => onReview(item)} className="px-3 py-1.5 rounded-xl border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition">Reviews</button>
-          <button className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-teal to-blue text-white text-xs font-bold hover:brightness-110 shadow-sm">Book</button>
+          <button onClick={() => onBook(item)} className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-teal to-blue text-white text-xs font-bold hover:brightness-110 shadow-sm">Book</button>
         </div>
       </div>
     </motion.div>
@@ -300,15 +302,16 @@ function ActivityCard({ item, onReview }) {
 
 /* ── MAIN ── */
 export default function BookingSystem() {
+  const { savedDestinations, toggleSaved } = useBooking();
   const [activeTab, setActiveTab] = useState("flights");
   const [selectedItemForReview, setSelectedItemForReview] = useState(null);
+  const [bookingModal, setBookingModal] = useState(null); // { item, category }
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("All");
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "map"
+  const [viewMode, setViewMode] = useState("grid");
   const [mapCenter, setMapCenter] = useState([20, 78]);
   const [mapZoom, setMapZoom] = useState(4);
   const [selectedDest, setSelectedDest] = useState(null);
-  const [likedDests, setLikedDests] = useState(new Set());
   const [showAllDests, setShowAllDests] = useState(false);
 
   const filteredDests = useMemo(() => {
@@ -444,11 +447,11 @@ export default function BookingSystem() {
           </div>
           <div className="grid lg:grid-cols-[1fr_360px] gap-8">
             <div className={`grid gap-4 ${activeTab === "activities" ? "sm:grid-cols-2" : "grid-cols-1"}`}>
-              {activeTab === "flights"    && currentResults.map(i => <FlightCard   key={i.id} item={i} onReview={setSelectedItemForReview} />)}
-              {activeTab === "trains"     && currentResults.map(i => <TrainCard    key={i.id} item={i} onReview={setSelectedItemForReview} />)}
-              {activeTab === "hotels"     && currentResults.map(i => <HotelCard    key={i.id} item={i} onReview={setSelectedItemForReview} />)}
-              {activeTab === "hostels"    && currentResults.map(i => <HostelCard   key={i.id} item={i} onReview={setSelectedItemForReview} />)}
-              {activeTab === "activities" && currentResults.map(i => <ActivityCard key={i.id} item={i} onReview={setSelectedItemForReview} />)}
+              {activeTab === "flights"    && currentResults.map(i => <FlightCard   key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "flights" })} />)}
+              {activeTab === "trains"     && currentResults.map(i => <TrainCard    key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "trains" })} />)}
+              {activeTab === "hotels"     && currentResults.map(i => <HotelCard    key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "hotels" })} />)}
+              {activeTab === "hostels"    && currentResults.map(i => <HostelCard   key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "hostels" })} />)}
+              {activeTab === "activities" && currentResults.map(i => <ActivityCard key={i.id} item={i} onReview={setSelectedItemForReview} onBook={item => setBookingModal({ item, category: "activities" })} />)}
             </div>
             <div className="hidden lg:block">
               <AnimatePresence mode="wait">
@@ -514,9 +517,9 @@ export default function BookingSystem() {
                     style={{ aspectRatio:"3/4" }} onClick={() => handleDestClick(d)}>
                     <img src={d.img} alt={d.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                    <button onClick={e => { e.stopPropagation(); toggleLike(d.id); }}
+                    <button onClick={e => { e.stopPropagation(); toggleSaved(d.id); }}
                       className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/30 backdrop-blur flex items-center justify-center hover:bg-black/50 transition">
-                      <Heart className={`h-3.5 w-3.5 ${likedDests.has(d.id) ? "fill-pink text-pink" : "text-white"}`} />
+                      <Heart className={`h-3.5 w-3.5 ${savedDestinations.includes(d.id) ? "fill-pink text-pink" : "text-white"}`} />
                     </button>
                     {d.popular && <div className="absolute top-2 left-2 text-[9px] font-bold bg-amber text-black px-1.5 py-0.5 rounded-full">🔥 Popular</div>}
                     <div className="absolute bottom-0 left-0 right-0 p-3">
@@ -588,6 +591,15 @@ export default function BookingSystem() {
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      {bookingModal && (
+        <BookingModal
+          item={bookingModal.item}
+          category={bookingModal.category}
+          onClose={() => setBookingModal(null)}
+        />
+      )}
     </div>
   );
 }

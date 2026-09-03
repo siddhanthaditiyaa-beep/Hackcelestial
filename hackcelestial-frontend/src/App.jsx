@@ -11,7 +11,8 @@ import Login from "./components/Login";
 import BookingSystem from "./components/BookingSystem";
 import Suggestions from "./components/Suggestions";
 import { useItineraryEngine } from "./hooks/useItineraryEngine";
-import { ArrowLeft, Loader2, Home, Compass, MessageSquarePlus } from "lucide-react";
+import { useAuth } from "./context/AuthContext";
+import { Loader2, Home, Compass, MessageSquarePlus } from "lucide-react";
 
 export default function App() {
   const {
@@ -43,11 +44,9 @@ export default function App() {
     reset,
   } = useItineraryEngine();
 
+  const { user, loading: authLoading, logout } = useAuth();
   const [selectedBookingId, setSelectedBookingId] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("recoup_auth") === "true" || sessionStorage.getItem("recoup_auth") === "true";
-  });
-  const [mainTab, setMainTab] = useState("booking"); // 'dashboard', 'booking', 'suggestions'
+  const [mainTab, setMainTab] = useState("booking");
 
   useEffect(() => {
     if (trip && trip.bookings && trip.bookings.length > 0) {
@@ -74,19 +73,16 @@ export default function App() {
     return disruptionTypes.find((t) => t.id === activeDisruption.type);
   }, [activeDisruption, disruptionTypes]);
 
-  if (!isAuthenticated) {
+  if (authLoading) {
     return (
-      <Login 
-        onLogin={(remember) => {
-          setIsAuthenticated(true);
-          if (remember) {
-            localStorage.setItem("recoup_auth", "true");
-          } else {
-            sessionStorage.setItem("recoup_auth", "true");
-          }
-        }} 
-      />
+      <div className="min-h-screen flex items-center justify-center bg-page-soft">
+        <Loader2 className="h-8 w-8 text-coral animate-spin" />
+      </div>
     );
+  }
+
+  if (!user) {
+    return <Login />;
   }
 
   if (loading || !trip) {
@@ -115,11 +111,7 @@ export default function App() {
         disruptedCount={disruptedCount}
         onReset={reset}
         onOpenCopilot={() => setIsCopilotOpen(true)}
-        onLogout={() => {
-          setIsAuthenticated(false);
-          localStorage.removeItem("recoup_auth");
-          sessionStorage.removeItem("recoup_auth");
-        }}
+        onLogout={logout}
       />
 
       {/* Global Navigation Tabs */}

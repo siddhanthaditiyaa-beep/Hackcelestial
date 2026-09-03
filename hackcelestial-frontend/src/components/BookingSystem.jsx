@@ -366,7 +366,7 @@ export default function BookingSystem() {
               const Icon = tab.icon;
               return (
                 <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSelectedItemForReview(null); }}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-sm text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id ? "bg-white text-ink shadow-sm" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-sm text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id ? "bg-white text-slate-900 shadow-sm" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
                   <Icon className="h-3.5 w-3.5" />{tab.label}
                 </button>
               );

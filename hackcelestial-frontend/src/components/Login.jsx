@@ -87,7 +87,7 @@ export default function Login() {
         animate={{ scale: [1, 1.04, 1] }}
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
-      <div className="absolute inset-0 bg-ink/55" />
+      <div className="absolute inset-0 bg-black/55" />
       <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, rgba(20,18,15,0.15) 0%, rgba(20,18,15,0.55) 100%)" }} />
 
       <ThemeToggle className="absolute top-5 right-5 z-20 bg-white/15 hover:bg-white/25 backdrop-blur text-white" />

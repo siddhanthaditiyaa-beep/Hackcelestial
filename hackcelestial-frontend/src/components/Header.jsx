@@ -206,7 +206,7 @@ export default function Header({
                   onClick={() => onSwitchView?.("rail")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition cursor-pointer ${
                     activeView === "rail"
-                      ? "bg-white text-ink shadow-sm"
+                      ? "bg-white text-slate-900 shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -217,7 +217,7 @@ export default function Header({
                   onClick={() => onSwitchView?.("graph")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition cursor-pointer ${
                     activeView === "graph"
-                      ? "bg-white text-ink shadow-sm"
+                      ? "bg-white text-slate-900 shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -228,7 +228,7 @@ export default function Header({
                   onClick={() => onSwitchView?.("radar")}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-semibold transition cursor-pointer ${
                     activeView === "radar"
-                      ? "bg-white text-ink shadow-sm"
+                      ? "bg-white text-slate-900 shadow-sm"
                       : "text-white/80 hover:text-white"
                   }`}
                 >
@@ -240,19 +240,19 @@ export default function Header({
               {/* Status Badges */}
               <div className="flex items-center gap-2 flex-wrap">
                 {disruptedCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-ink/80 text-white border border-white/10">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-black/60 text-white border border-white/10">
                     <span className="h-2 w-2 rounded-full bg-status-disrupted animate-pulse" />
                     {disruptedCount} Disrupted
                   </span>
                 )}
                 {atRiskCount > 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-ink/80 text-white border border-white/10">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-black/60 text-white border border-white/10">
                     <span className="h-2 w-2 rounded-full bg-status-risk" />
                     {atRiskCount} At Risk
                   </span>
                 )}
                 {disruptedCount === 0 && atRiskCount === 0 && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-ink/80 text-white border border-white/10">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full bg-black/60 text-white border border-white/10">
                     <span className="h-2 w-2 rounded-full bg-status-resolved animate-[pulse_2s_ease-in-out_infinite]" />
                     Itinerary Optimal
                   </span>

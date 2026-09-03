@@ -3,6 +3,9 @@ import cors from "cors";
 import itineraryRoutes from "./routes/itinerary.js";
 import disruptRoutes from "./routes/disrupt.js";
 import recoveryRoutes from "./routes/recovery.js";
+import bookingDisruptRoutes from "./routes/bookingDisrupt.js";
+import aiInsightsRoutes from "./routes/aiInsights.js";
+import riskCheckRoutes from "./routes/riskCheck.js";
 import { getAllTrips } from "./data/store.js";
 
 export function createApp() {
@@ -15,8 +18,11 @@ export function createApp() {
   app.get("/api/trips", (_req, res) => res.json(getAllTrips()));
 
   app.use("/api/itinerary", itineraryRoutes);
-  app.use("/api", disruptRoutes);   // /api/disrupt, /api/disruption-types
-  app.use("/api", recoveryRoutes);  // /api/select-recovery
+  app.use("/api", disruptRoutes);        // /api/disrupt, /api/disruption-types
+  app.use("/api", recoveryRoutes);       // /api/select-recovery
+  app.use("/api", bookingDisruptRoutes); // /api/booking-disrupt
+  app.use("/api", aiInsightsRoutes);     // /api/ai/insights, /api/ai/trip-suggestions
+  app.use("/api", riskCheckRoutes);      // /api/risk-check
 
   app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 

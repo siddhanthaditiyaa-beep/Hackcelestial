@@ -163,7 +163,7 @@ export default function App() {
       <main className="max-w-[1240px] mx-auto px-4 md:px-8 pb-12">
         {mainTab === "booking" && <BookingSystem />}
         
-        {mainTab === "suggestions" && <Suggestions destination={trip.tripName} />}
+        {mainTab === "suggestions" && <Suggestions />}
         
         {mainTab === "dashboard" && (
         <div className="bg-page rounded-lg shadow-md px-4 md:px-8 py-4 grid lg:grid-cols-[1fr_420px] gap-8">

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Users, CreditCard, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck } from "lucide-react";
+import { Calendar, Users, CreditCard, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useBooking } from "../context/BookingContext";
 import { CATEGORY_TINT } from "../utils/visuals";
+import { checkBookingRisk } from "../data/api";
 import Modal from "./ui/Modal";
 import MyBookingsModal from "./MyBookingsModal";
 
@@ -18,9 +19,19 @@ export default function BookingModal({ item, category, onClose }) {
   const [paymentTab, setPaymentTab] = useState("card");
   const [loading, setLoading] = useState(false);
   const [showMyBookings, setShowMyBookings] = useState(false);
+  const [riskWarning, setRiskWarning] = useState(null);
+  const [dismissedRisk, setDismissedRisk] = useState(false);
 
   const Icon = CATEGORY_ICONS[category] || Plane;
   const tint = CATEGORY_TINT[CATEGORY_KEY[category]] || CATEGORY_TINT.flight;
+
+  useEffect(() => {
+    const location = item.loc || (item.from && item.to ? `${item.from} → ${item.to}` : item.name || "");
+    checkBookingRisk({ type: CATEGORY_KEY[category], location, vendor: item.airline || item.name })
+      .then((res) => { if (res.atRisk) setRiskWarning(res); })
+      .catch(() => {}); // advisory only — never block booking on this failing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const needsNights = category === "hotels" || category === "hostels";
   const itemName = item.name || item.title || (item.airline ? `${item.airline} ${item.flight}` : "Booking");
@@ -105,6 +116,16 @@ export default function BookingModal({ item, category, onClose }) {
           <div className="p-6 space-y-4 overflow-y-auto">
             {step === 1 && (
               <>
+                {riskWarning && !dismissedRisk && (
+                  <div className="flex items-start gap-2.5 bg-status-risk-dim border border-status-risk/30 rounded-sm px-3.5 py-3 text-xs">
+                    <AlertTriangle className="h-4 w-4 text-status-risk shrink-0 mt-0.5" />
+                    <div className="flex-1 text-ink-dim">
+                      <span className="font-semibold text-status-risk">Heads up —</span> this route/vendor currently has an active disruption elsewhere in the system. You can still book — Recoup AI's recovery safety net will be active if this happens to you too.
+                    </div>
+                    <button onClick={() => setDismissedRisk(true)} className="text-status-risk/70 hover:text-status-risk shrink-0 font-bold text-sm leading-none">×</button>
+                  </div>
+                )}
+
                 {/* Date */}
                 <div>
                   <label className="text-xs font-semibold text-ink-dim uppercase tracking-wide block mb-1.5">

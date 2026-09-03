@@ -5,6 +5,8 @@ import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { BookingProvider } from './context/BookingContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+import { ToastProvider } from './context/ToastContext.jsx'
+import ToastStack from './components/ui/Toast.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
@@ -12,9 +14,12 @@ createRoot(document.getElementById('root')).render(
     <ThemeProvider>
       <AuthProvider>
         <BookingProvider>
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
+          <ToastProvider>
+            <ErrorBoundary>
+              <App />
+            </ErrorBoundary>
+            <ToastStack />
+          </ToastProvider>
         </BookingProvider>
       </AuthProvider>
     </ThemeProvider>

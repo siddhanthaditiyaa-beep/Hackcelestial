@@ -88,3 +88,35 @@ export async function simulateDelay(
 export async function resetItinerary(tripId = "trip_001") {
   return request(`/itinerary/${tripId}/reset`, { method: "POST" });
 }
+
+// ---------------------------------------------------------------------------
+// Real-booking disruption loop + AI content (feature push)
+// ---------------------------------------------------------------------------
+
+export async function disruptRealBooking(booking, disruptionType, delayMinutes = 0, travelerPreference = "balanced") {
+  return request(`/booking-disrupt`, {
+    method: "POST",
+    body: JSON.stringify({ booking, disruptionType, delayMinutes: Number(delayMinutes) || 0, travelerPreference }),
+  });
+}
+
+export async function getAITravelInsights(bookingHistory = []) {
+  return request(`/ai/insights`, {
+    method: "POST",
+    body: JSON.stringify({ bookingHistory }),
+  });
+}
+
+export async function getAITripSuggestions(destination) {
+  return request(`/ai/trip-suggestions`, {
+    method: "POST",
+    body: JSON.stringify({ destination }),
+  });
+}
+
+export async function checkBookingRisk({ type, location, vendor }) {
+  return request(`/risk-check`, {
+    method: "POST",
+    body: JSON.stringify({ type, location, vendor }),
+  });
+}

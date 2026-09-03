@@ -5,6 +5,16 @@ import "dotenv/config";
 const apiKey = process.env.GEMINI_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
+// The Gemini SDK call has no built-in timeout — a slow/hanging response would
+// otherwise leave a request (and the UI waiting on it) hanging indefinitely.
+// Every ai.models.generateContent call in this file goes through this.
+function generateWithTimeout(params, timeoutMs = 12_000) {
+  return Promise.race([
+    ai.models.generateContent(params),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Gemini request timed out")), timeoutMs)),
+  ]);
+}
+
 /**
  * Enhanced graph traversal (BFS) computing direct and downstream cascade impacts.
  * Distinguishes hard breaches (buffer collapsed) from soft tight-connection warnings.
@@ -203,8 +213,8 @@ Each object MUST have these exact keys:
 
 Ensure the options are creative, realistic, and tailored to the preference.`;
       
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+      const response = await generateWithTimeout({
+        model: "gemini-3.6-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -424,8 +434,8 @@ Return ONLY a JSON object with these EXACT keys:
   - "insuranceClaimFiling": object with "claimType", "estimatedClaimable" (string with currency), "status"
 
 Draft realistic and professional communications for the vendors.`;
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+      const response = await generateWithTimeout({
+        model: "gemini-3.6-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -471,5 +481,158 @@ Draft realistic and professional communications for the vendors.`;
     executiveSummary,
     chainReactionExplained,
     vendorDrafts,
+  };
+}
+
+const STATIC_INSIGHTS = [
+  { icon: "✈️", text: "Bali in November — perfect weather, off-peak pricing. Flights from ₹18,500.", category: "flights", destinationHint: "Bali" },
+  { icon: "🏨", text: "Book 3+ nights for 15% discount. Ubud hotels filling fast this week.", category: "hotels", destinationHint: "Bali" },
+  { icon: "🚄", text: "Train to Kerala 40% cheaper than flights & scenic. Seats dropping fast.", category: "trains", destinationHint: "Kerala" },
+  { icon: "🎭", text: "Uluwatu Kecak Dance sold out Nov 16 — book Day 2 activity now.", category: "activities", destinationHint: "Bali" },
+  { icon: "🌴", text: "Maldives overwater villas: best rates in Sept–Oct before peak season.", category: "hotels", destinationHint: "Maldives" },
+  { icon: "🗼", text: "Paris + Rome combo: saves ₹12,000 vs. booking separately.", category: "flights", destinationHint: "Paris" },
+  { icon: "🏔", text: "Ladakh road-trip season closes Dec 1 — only 3 weeks left to book.", category: "activities", destinationHint: "Leh Ladakh" },
+  { icon: "🎌", text: "Japan cherry blossom season peaks late March — hotel spots gone in 2 weeks.", category: "hotels", destinationHint: "Tokyo" },
+];
+
+/**
+ * Fresh AI Travel Insights — 6-8 structured suggestion cards, optionally
+ * personalized against the traveler's real booking history. Returns
+ * structured fields (not free text) so the frontend can route a card click
+ * straight into a destination/category view.
+ */
+export async function generateTravelInsights(bookingHistory = []) {
+  if (ai) {
+    try {
+      const historyLine = bookingHistory.length
+        ? bookingHistory.map((b) => `${b.category || b.type}: ${b.itemName || b.title} (${b.loc || ""})`).join("; ")
+        : "No bookings yet — generate broadly appealing suggestions.";
+
+      const prompt = `You are Recoup's AI travel insights generator for a booking platform (flights, trains, hotels, hostels, activities).
+Traveler's recent bookings: ${historyLine}
+
+Generate exactly 7 diverse, fresh, specific travel insight cards as a JSON array. Vary destinations and categories each time — do not just repeat generic tips.
+Each object MUST have these exact keys:
+- "icon": string (single relevant emoji)
+- "text": string (one punchy sentence, under 110 characters, mention a concrete detail like a price, date window, or % saving)
+- "category": string (one of: flights, trains, hotels, hostels, activities)
+- "destinationHint": string (a real city/place name this insight is about)
+
+If the traveler has bookings, bias roughly half the suggestions toward destinations/categories related to their history (e.g. "since you booked X, consider Y nearby"), and the rest toward fresh discovery.`;
+
+      const response = await generateWithTimeout({
+        model: "gemini-3.6-flash",
+        contents: prompt,
+        config: { responseMimeType: "application/json" },
+      });
+      const generated = JSON.parse(response.text);
+      if (Array.isArray(generated) && generated.length > 0) return generated;
+    } catch (err) {
+      console.error("AI travel insights generation failed:", err);
+    }
+  }
+
+  // Fallback: shuffle the static list so "refresh" still feels different.
+  return [...STATIC_INSIGHTS].sort(() => Math.random() - 0.5);
+}
+
+const STATIC_TRIP_TIPS = [
+  { emoji: "🍜", title: "Eat where the locals eat", text: "Skip the hotel restaurant — night markets and family-run spots are cheaper and better.", vibe: "food" },
+  { emoji: "🎒", title: "Pack light, pack smart", text: "A universal adapter and one extra power bank solve 90% of travel-day headaches.", vibe: "practical" },
+  { emoji: "🌅", title: "Chase the golden hour", text: "Book sunrise or sunset activities first — they sell out fastest and photograph best.", vibe: "adventure" },
+];
+
+/**
+ * AI-generated "fun" trip tips for a specific destination — powers the
+ * Trip Suggestions tab and the destination bundle "coming soon" fallback.
+ */
+export async function generateTripSuggestions(destination) {
+  if (ai) {
+    try {
+      const prompt = `You are a well-traveled, enthusiastic local guide. Generate exactly 4 fun, specific, non-generic travel tips for a trip to "${destination || "a popular destination"}" as a JSON array.
+Each object MUST have these exact keys:
+- "emoji": string (single relevant emoji)
+- "title": string (short punchy title, under 40 characters)
+- "text": string (one or two sentences, concrete and specific to the destination, under 160 characters)
+- "vibe": string (one of: food, adventure, culture, budget, luxury, practical)
+
+Make it feel like insider knowledge, not a Wikipedia summary.`;
+
+      const response = await generateWithTimeout({
+        model: "gemini-3.6-flash",
+        contents: prompt,
+        config: { responseMimeType: "application/json" },
+      });
+      const generated = JSON.parse(response.text);
+      if (Array.isArray(generated) && generated.length > 0) return generated;
+    } catch (err) {
+      console.error("AI trip suggestions generation failed:", err);
+    }
+  }
+
+  return STATIC_TRIP_TIPS;
+}
+
+const DEFAULT_CANCELLATION_POLICY = {
+  flight: { refundPct: 70, windowHours: 24 },
+  train: { refundPct: 80, windowHours: 6 },
+  hotel: { refundPct: 50, windowHours: 48 },
+  activity: { refundPct: 0, windowHours: 12 },
+  transfer: { refundPct: 60, windowHours: 4 },
+};
+
+/**
+ * Disrupt + recover a single ad-hoc real booking (from the booking platform,
+ * not the seeded demo trips). Reuses the same cascade/severity/AI machinery
+ * as the demo-trip flow, called with a synthetic single-booking "graph" —
+ * computeDownstreamImpact naturally returns no downstream bookings since
+ * there's nothing else in the list depending on it.
+ */
+export async function disruptRealBooking(booking, disruptionType, delayMinutes = 0, preference = "balanced") {
+  const normalized = {
+    ...booking,
+    dependsOn: [],
+    bufferMinutes: booking.bufferMinutes ?? null,
+    cancellationPolicy: booking.cancellationPolicy || DEFAULT_CANCELLATION_POLICY[booking.type] || null,
+  };
+
+  const cascade = computeDownstreamImpact([normalized], normalized.id, delayMinutes, disruptionType);
+  const severityScore = computeSeverity(disruptionType, 0, 0, cascade.hardFailures.length > 0);
+
+  const recoveryOptions = await generateRecoveryOptions([normalized], normalized.id, [], preference);
+
+  const disruptionMeta = {
+    id: `dis_real_${Date.now()}`,
+    bookingId: normalized.id,
+    type: disruptionType,
+    delayMinutes: Number(delayMinutes) || 0,
+    triggeredAt: new Date().toISOString(),
+  };
+
+  const bookingsById = { [normalized.id]: normalized };
+  const topPlan = recoveryOptions.find((p) => p.recommended) || recoveryOptions[0];
+  const aiBrief = topPlan
+    ? await generateAIIncidentBrief(
+        disruptionMeta,
+        { directImpact: normalized.id, downstreamImpacts: [] },
+        topPlan,
+        bookingsById,
+        "INR"
+      )
+    : null;
+
+  return {
+    disruption: disruptionMeta,
+    impact: {
+      directImpact: normalized.id,
+      downstreamImpacts: [],
+      cascadePaths: cascade.cascadePaths,
+      hardFailures: cascade.hardFailures,
+      tightWarnings: cascade.tightWarnings,
+      severityScore,
+      financialMetrics: cascade.financialMetrics,
+    },
+    recoveryOptions,
+    aiBrief,
   };
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Star, MessageSquare } from "lucide-react";
+import { Star, MessageSquare, X } from "lucide-react";
 
-export default function Reviews({ itemName }) {
+export default function Reviews({ itemName, onClose }) {
   const [reviews, setReviews] = useState([
     { id: 1, user: "Aman", rating: 5, text: "Excellent experience, highly recommended!", date: "2026-08-15" },
     { id: 2, user: "Sneha", rating: 4, text: "Very good but slightly expensive.", date: "2026-08-10" }
@@ -29,10 +29,17 @@ export default function Reviews({ itemName }) {
 
   return (
     <div className="bg-surface rounded-md p-6 border border-border shadow-sm">
-      <h3 className="text-lg font-semibold text-ink mb-4 flex items-center gap-2">
-        <MessageSquare className="h-5 w-5 text-brand" />
-        Reviews for {itemName}
-      </h3>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h3 className="text-lg font-semibold text-ink flex items-center gap-2 min-w-0">
+          <MessageSquare className="h-5 w-5 text-brand shrink-0" />
+          <span className="truncate">Reviews for {itemName}</span>
+        </h3>
+        {onClose && (
+          <button onClick={onClose} className="h-7 w-7 rounded-full hover:bg-surface-sunk flex items-center justify-center text-ink-faint hover:text-ink transition shrink-0">
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       {/* Review List */}
       <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">

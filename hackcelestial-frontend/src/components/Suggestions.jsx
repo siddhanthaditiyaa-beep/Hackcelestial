@@ -1,25 +1,63 @@
-import { useState } from "react";
-import { Lightbulb, Plus, ThumbsUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { Lightbulb, Plus, ThumbsUp, Sparkles, RotateCw, MapPin } from "lucide-react";
+import { getAITripSuggestions } from "../data/api";
+import { useBooking } from "../context/BookingContext";
+import Autocomplete from "./ui/Autocomplete";
 
-export default function Suggestions({ destination }) {
-  const [suggestions, setSuggestions] = useState([
-    { id: 1, text: "Try the street food at the night market, it's amazing and cheap!", author: "TravelPro99", upvotes: 12 },
-    { id: 2, text: "Book your hotel near the central station to save time on commuting.", author: "ExplorerAditi", upvotes: 8 },
-    { id: 3, text: "Don't forget to pack a universal adapter.", author: "NomadSam", upvotes: 3 }
-  ]);
+const VIBE_TINT = {
+  food: "bg-status-risk-dim text-status-risk",
+  adventure: "bg-cat-activity/10 text-activity",
+  culture: "bg-cat-train/10 text-train",
+  budget: "bg-status-resolved-dim text-status-resolved",
+  luxury: "bg-brand-dim text-brand",
+  practical: "bg-cat-flight/10 text-flight",
+};
+
+const SEED_SUGGESTIONS = [
+  { id: 1, text: "Try the street food at the night market, it's amazing and cheap!", author: "TravelPro99", upvotes: 12 },
+  { id: 2, text: "Book your hotel near the central station to save time on commuting.", author: "ExplorerAditi", upvotes: 8 },
+  { id: 3, text: "Don't forget to pack a universal adapter.", author: "NomadSam", upvotes: 3 },
+];
+
+export default function Suggestions({ destination: destinationProp }) {
+  const { confirmedBookings, savedDestinations } = useBooking();
+
+  const defaultDestination = useMemo(() => {
+    if (destinationProp) return destinationProp;
+    const recent = confirmedBookings[0];
+    if (recent?.loc) return recent.loc.split(",")[0].trim();
+    if (recent?.itemName) return recent.itemName;
+    if (savedDestinations[0]) return savedDestinations[0];
+    return "Bali";
+  }, [destinationProp, confirmedBookings, savedDestinations]);
+
+  const [destination, setDestination] = useState(defaultDestination);
+  const [suggestions, setSuggestions] = useState(SEED_SUGGESTIONS);
   const [newSuggestion, setNewSuggestion] = useState("");
+  const [aiTips, setAiTips] = useState([]);
+  const [loadingTips, setLoadingTips] = useState(true);
+
+  const loadTips = async () => {
+    setLoadingTips(true);
+    try {
+      const tips = await getAITripSuggestions(destination);
+      setAiTips(tips);
+    } catch {
+      setAiTips([]);
+    } finally {
+      setLoadingTips(false);
+    }
+  };
+
+  useEffect(() => { loadTips(); }, [destination]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!newSuggestion.trim()) return;
 
     setSuggestions([
-      {
-        id: Date.now(),
-        text: newSuggestion,
-        author: "Current User",
-        upvotes: 0
-      },
+      { id: Date.now(), text: newSuggestion, author: "Current User", upvotes: 0 },
       ...suggestions
     ]);
     setNewSuggestion("");
@@ -31,15 +69,64 @@ export default function Suggestions({ destination }) {
 
   return (
     <div className="bg-page rounded-lg shadow-sm px-4 md:px-8 py-8 border border-border mt-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="h-10 w-10 rounded-sm bg-brand-dim border border-brand/20 flex items-center justify-center">
-          <Lightbulb className="h-5 w-5 text-brand" />
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-sm bg-brand-dim border border-brand/20 flex items-center justify-center">
+            <Lightbulb className="h-5 w-5 text-brand" />
+          </div>
+          <div>
+            <h2 className="font-display font-medium text-xl text-ink">
+              Community Suggestions {destination ? `for ${destination}` : ""}
+            </h2>
+            <p className="text-xs text-ink-dim mt-0.5">Tips and tricks from fellow travelers, plus AI-powered insider knowledge</p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-display font-medium text-xl text-ink">
-            Community Suggestions {destination ? `for ${destination}` : ""}
-          </h2>
-          <p className="text-xs text-ink-dim mt-0.5">Tips and tricks from fellow travelers</p>
+        <Autocomplete
+          value={destination}
+          onChange={setDestination}
+          placeholder="Change destination…"
+          icon={MapPin}
+          className="w-full sm:w-56"
+        />
+      </div>
+
+      {/* AI Tips */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-status-resolved">
+            <Sparkles className="h-3.5 w-3.5" /> Recoup AI Tips
+          </span>
+          <button onClick={loadTips} disabled={loadingTips} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-faint hover:text-brand transition disabled:opacity-50">
+            <RotateCw className={`h-3 w-3 ${loadingTips ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          {(loadingTips ? Array.from({ length: 4 }) : aiTips).map((tip, i) => (
+            <motion.div
+              key={tip?.title || i}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06 }}
+              className="rounded-md bg-surface border border-border p-4 shadow-sm"
+            >
+              {tip ? (
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xl">{tip.emoji}</span>
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full ${VIBE_TINT[tip.vibe] || VIBE_TINT.practical}`}>{tip.vibe}</span>
+                  </div>
+                  <div className="font-semibold text-sm text-ink mb-1">{tip.title}</div>
+                  <p className="text-xs text-ink-dim leading-relaxed">{tip.text}</p>
+                </>
+              ) : (
+                <div className="animate-pulse space-y-2">
+                  <div className="h-5 w-5 rounded bg-surface-sunk" />
+                  <div className="h-3 w-3/4 rounded bg-surface-sunk" />
+                  <div className="h-3 w-full rounded bg-surface-sunk" />
+                </div>
+              )}
+            </motion.div>
+          ))}
         </div>
       </div>
 

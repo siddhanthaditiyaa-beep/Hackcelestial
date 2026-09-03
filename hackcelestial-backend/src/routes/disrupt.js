@@ -8,6 +8,7 @@ import {
   generateRecoveryOptions,
   generateAIIncidentBrief,
 } from "../logic/engine.js";
+import { recordDisruption } from "../data/disruptionLog.js";
 
 const router = Router();
 
@@ -71,6 +72,13 @@ router.post("/disrupt", async (req, res) => {
   const statusUpdates = { [bookingId]: "disrupted" };
   downstreamIds.forEach((id) => (statusUpdates[id] = "at-risk"));
   updateBookingStatuses(tripId, statusUpdates);
+
+  recordDisruption({
+    type,
+    location: booking.location || booking.title,
+    vendor: booking.vendor,
+    bookingType: booking.type,
+  });
 
   // 4. Generate ranked recovery options tailored to traveler preferences
   const recoveryOptions = await generateRecoveryOptions(

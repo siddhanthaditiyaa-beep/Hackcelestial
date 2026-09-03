@@ -14,14 +14,25 @@ export function BookingProvider({ children }) {
     try { return JSON.parse(localStorage.getItem("recoup_saved") || "[]"); } catch { return []; }
   });
 
-  const addBooking = async (booking) => {
-    const newBooking = { ...booking, id: Date.now().toString(), bookedAt: new Date().toISOString() };
-    const updated = [newBooking, ...confirmedBookings];
-    setConfirmedBookings(updated);
-    localStorage.setItem("recoup_bookings", JSON.stringify(updated));
+  // The demo account (AuthContext's signInAsDemo) has a fake uid and no real
+  // Firebase Auth session — Firestore writes for it are rejected by security
+  // rules and, worse, can hang indefinitely under offline persistence rather
+  // than rejecting promptly. Never attempt Firestore sync for it.
+  const canSyncFirestore = !!user?.uid && !user?.isDemo;
 
-    // Also persist to Firestore if logged in
-    if (user?.uid) {
+  // All mutations use the functional setState form so concurrent calls
+  // (e.g. Promise.all-ing several addBooking calls for a bundle checkout)
+  // don't race on a stale closure of confirmedBookings and clobber each other.
+
+  const addBooking = async (booking) => {
+    const newBooking = { ...booking, id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, bookedAt: new Date().toISOString() };
+    setConfirmedBookings((prev) => {
+      const updated = [newBooking, ...prev];
+      localStorage.setItem("recoup_bookings", JSON.stringify(updated));
+      return updated;
+    });
+
+    if (canSyncFirestore) {
       try {
         const ref = doc(db, "users", user.uid);
         await updateDoc(ref, { bookings: arrayUnion(newBooking) });
@@ -31,12 +42,14 @@ export function BookingProvider({ children }) {
   };
 
   const removeBooking = async (bookingId) => {
-    const removed = confirmedBookings.find(b => b.id === bookingId);
-    const updated = confirmedBookings.filter(b => b.id !== bookingId);
-    setConfirmedBookings(updated);
-    localStorage.setItem("recoup_bookings", JSON.stringify(updated));
+    const removed = confirmedBookings.find(b => b.id === bookingId) || null;
+    setConfirmedBookings((prev) => {
+      const updated = prev.filter(b => b.id !== bookingId);
+      localStorage.setItem("recoup_bookings", JSON.stringify(updated));
+      return updated;
+    });
 
-    if (user?.uid && removed) {
+    if (canSyncFirestore && removed) {
       try {
         const ref = doc(db, "users", user.uid);
         await updateDoc(ref, { bookings: arrayRemove(removed) });
@@ -44,17 +57,38 @@ export function BookingProvider({ children }) {
     }
   };
 
+  const updateBooking = async (bookingId, patch) => {
+    const existing = confirmedBookings.find(b => b.id === bookingId) || null;
+    if (!existing) return;
+    const updatedBooking = { ...existing, ...patch };
+
+    setConfirmedBookings((prev) => {
+      const updated = prev.map(b => b.id === bookingId ? { ...b, ...patch } : b);
+      localStorage.setItem("recoup_bookings", JSON.stringify(updated));
+      return updated;
+    });
+
+    if (canSyncFirestore) {
+      try {
+        const ref = doc(db, "users", user.uid);
+        await updateDoc(ref, { bookings: arrayRemove(existing) });
+        await updateDoc(ref, { bookings: arrayUnion(updatedBooking) });
+      } catch (e) { console.warn("Firestore update failed, updated locally", e); }
+    }
+    return updatedBooking;
+  };
+
   const toggleSaved = async (destId) => {
-    const isSaved = savedDestinations.includes(destId);
-    const updated = isSaved
-      ? savedDestinations.filter(id => id !== destId)
-      : [...savedDestinations, destId];
-    setSavedDestinations(updated);
-    localStorage.setItem("recoup_saved", JSON.stringify(updated));
+    setSavedDestinations((prev) => {
+      const isSaved = prev.includes(destId);
+      const updated = isSaved ? prev.filter(id => id !== destId) : [...prev, destId];
+      localStorage.setItem("recoup_saved", JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (
-    <BookingContext.Provider value={{ confirmedBookings, savedDestinations, addBooking, removeBooking, toggleSaved }}>
+    <BookingContext.Provider value={{ confirmedBookings, savedDestinations, addBooking, removeBooking, updateBooking, toggleSaved }}>
       {children}
     </BookingContext.Provider>
   );

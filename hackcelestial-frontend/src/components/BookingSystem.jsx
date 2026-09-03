@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, MapPin, Calendar as CalendarIcon, Users, ChevronRight, Star, Plane, Building } from "lucide-react";
+import { Search, MapPin, Calendar as CalendarIcon, Users, Star, Plane, Building, MessageSquare } from "lucide-react";
 import Reviews from "./Reviews";
 
 export default function BookingSystem() {

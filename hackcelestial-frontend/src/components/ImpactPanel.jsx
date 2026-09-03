@@ -31,10 +31,10 @@ export default function ImpactPanel({
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="rounded-3xl border border-pink-dim bg-pink-dim/50 p-6 mb-5 space-y-4"
+      className="rounded-3xl border border-pink/30 bg-pink-dim/30 p-6 mb-5 space-y-4"
     >
       <div className="flex items-start gap-3.5">
-        <div className="h-10 w-10 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+        <div className="h-10 w-10 rounded-2xl bg-surface border border-border flex items-center justify-center shrink-0 shadow-sm">
           <AlertOctagon className="h-5 w-5 text-pink" />
         </div>
         <div className="min-w-0 flex-1">
@@ -48,7 +48,7 @@ export default function ImpactPanel({
           </div>
 
           {/* Severity Progress Bar */}
-          <div className="h-2 rounded-full bg-white/80 mt-2.5 overflow-hidden">
+          <div className="h-2 rounded-full bg-border mt-2.5 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${impact.severityScore}%` }}
@@ -67,7 +67,7 @@ export default function ImpactPanel({
 
       {/* Ripple Domino Chain */}
       {downstreamTitles.length > 0 && (
-        <div className="p-3.5 rounded-2xl bg-white/70 border border-border-light text-xs text-ink-dim space-y-2">
+        <div className="p-3.5 rounded-2xl bg-surface border border-border text-xs text-ink-dim space-y-2">
           <div className="flex items-center gap-1.5 font-semibold text-ink">
             <ShieldAlert className="h-3.5 w-3.5 text-pink" />
             Cascading Ripple Path ({downstreamTitles.length + 1} bookings affected):
@@ -94,7 +94,7 @@ export default function ImpactPanel({
       {/* Financial Exposure Readout */}
       {fm && (
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="p-3 rounded-2xl bg-white/80 border border-border-light">
+          <div className="p-3 rounded-2xl bg-surface border border-border">
             <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider block">
               Total Booking Value at Risk
             </span>
@@ -102,7 +102,7 @@ export default function ImpactPanel({
               {currSym}{fm.totalExposedCost.toLocaleString()}
             </span>
           </div>
-          <div className="p-3 rounded-2xl bg-white/80 border border-border-light">
+          <div className="p-3 rounded-2xl bg-surface border border-border">
             <span className="text-[10px] text-ink-faint font-semibold uppercase tracking-wider block">
               Recoverable via Policy
             </span>

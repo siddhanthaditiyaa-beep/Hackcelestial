@@ -76,7 +76,7 @@ export default function BookingNode({
                 </span>
               )}
               {booking.recoveryPlanApplied && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-teal text-slate-900 shadow-sm">
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-teal text-white dark:text-slate-900 shadow-sm">
                   <Sparkles className="h-2.5 w-2.5" />
                   Recovered
                 </span>

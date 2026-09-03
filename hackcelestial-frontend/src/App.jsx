@@ -47,7 +47,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem("recoup_auth") === "true" || sessionStorage.getItem("recoup_auth") === "true";
   });
-  const [mainTab, setMainTab] = useState("dashboard"); // 'dashboard', 'booking', 'suggestions'
+  const [mainTab, setMainTab] = useState("booking"); // 'dashboard', 'booking', 'suggestions'
 
   useEffect(() => {
     if (trip && trip.bookings && trip.bookings.length > 0) {

@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { HERO_IMAGE } from "../utils/bookingImages";
 
 export default function Login() {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail, signInAsDemo } = useAuth();
   const [mode, setMode] = useState("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -57,6 +57,7 @@ export default function Login() {
         "auth/invalid-email": "Invalid email address.",
         "auth/too-many-requests": "Too many attempts. Please try again later.",
         "auth/invalid-credential": "Invalid email or password.",
+        "auth/operation-not-allowed": "Email sign-in is not enabled yet in Firebase. Please enable Email/Password provider in Firebase Console under Authentication.",
       };
       setError(map[e.code] || e.message);
     } finally {
@@ -64,18 +65,13 @@ export default function Login() {
     }
   };
 
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = () => {
     setLoading(true);
     setError("");
     try {
-      await signInWithEmail("demo@recoup.travel", "hackcelestial2024");
-    } catch {
-      // Demo account might not exist yet — create it
-      try {
-        await signUpWithEmail("Demo Traveler", "demo@recoup.travel", "hackcelestial2024");
-      } catch (e2) {
-        setError("Demo login failed. Please use Google or create an account.");
-      }
+      signInAsDemo();
+    } catch (e) {
+      setError("Demo login failed.");
     } finally {
       setLoading(false);
     }

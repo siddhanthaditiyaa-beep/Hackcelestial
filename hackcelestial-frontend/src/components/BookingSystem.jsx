@@ -48,8 +48,8 @@ const ALL_DESTINATIONS = [
   { id:"s4",  name:"Hanoi",          country:"Vietnam",     region:"Southeast Asia",lat:21.0278, lng:105.8342, img:"https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&q=80", tag:"🍜 Food",      temp:"25°C", price:"From ₹14,000" },
   { id:"s5",  name:"Singapore",      country:"Singapore",   region:"Southeast Asia",lat:1.3521,  lng:103.8198, img:"https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=600&q=80", tag:"✨ Modern",    temp:"31°C", price:"From ₹28,000", popular:true },
   { id:"s6",  name:"Kuala Lumpur",   country:"Malaysia",    region:"Southeast Asia",lat:3.1390,  lng:101.6869, img:"https://images.unsplash.com/photo-1587474260584-136574528ed5?w=600&q=80", tag:"🏙 City",      temp:"32°C", price:"From ₹15,500" },
-  { id:"s7",  name:"Colombo",        country:"Sri Lanka",   region:"Southeast Asia",lat:6.9271,  lng:79.8612, img:"https://images.unsplash.com/photo-1608170825938-a8ea0305e4c2?w=600&q=80", tag:"🌊 Beach",     temp:"29°C", price:"From ₹10,500" },
-  { id:"s8",  name:"Bagan",          country:"Myanmar",     region:"Southeast Asia",lat:21.1717, lng:94.8586, img:"https://images.unsplash.com/photo-1545414959-2f6e892ee0b5?w=600&q=80", tag:"⛩ Ancient",   temp:"26°C", price:"From ₹12,000" },
+  { id:"s7",  name:"Colombo",        country:"Sri Lanka",   region:"Southeast Asia",lat:6.9271,  lng:79.8612, img:"https://images.unsplash.com/photo-1600255821058-c4f89958d700?w=600&q=80", tag:"🌊 Beach",     temp:"29°C", price:"From ₹10,500" },
+  { id:"s8",  name:"Bagan",          country:"Myanmar",     region:"Southeast Asia",lat:21.1717, lng:94.8586, img:"https://images.unsplash.com/photo-1556967789-e6512208cf68?w=600&q=80", tag:"⛩ Ancient",   temp:"26°C", price:"From ₹12,000" },
 
   // East Asia
   { id:"e1",  name:"Tokyo",          country:"Japan",       region:"East Asia",     lat:35.6762, lng:139.6503, img:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", tag:"⛩ Culture",  temp:"22°C", price:"From ₹42,000", popular:true },
@@ -60,9 +60,9 @@ const ALL_DESTINATIONS = [
 
   // Middle East
   { id:"m1",  name:"Dubai",          country:"UAE",         region:"Middle East",   lat:25.2048, lng:55.2708, img:"https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80", tag:"✨ Luxury",    temp:"35°C", price:"From ₹24,000", popular:true },
-  { id:"m2",  name:"Abu Dhabi",      country:"UAE",         region:"Middle East",   lat:24.4539, lng:54.3773, img:"https://images.unsplash.com/photo-1541401139778-c4d1d21c8e89?w=600&q=80", tag:"🕌 Grand",     temp:"36°C", price:"From ₹22,000" },
+  { id:"m2",  name:"Abu Dhabi",      country:"UAE",         region:"Middle East",   lat:24.4539, lng:54.3773, img:"https://images.unsplash.com/photo-1512632578888-169bbbc64f33?w=600&q=80", tag:"🕌 Grand",     temp:"36°C", price:"From ₹22,000" },
   { id:"m3",  name:"Istanbul",       country:"Turkey",      region:"Middle East",   lat:41.0082, lng:28.9784, img:"https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=600&q=80", tag:"🕌 Historic",  temp:"22°C", price:"From ₹26,000", popular:true },
-  { id:"m4",  name:"Doha",           country:"Qatar",       region:"Middle East",   lat:25.2854, lng:51.5310, img:"https://images.unsplash.com/photo-1598127168957-c12af3e5ccc4?w=600&q=80", tag:"🏙 Modern",    temp:"38°C", price:"From ₹28,000" },
+  { id:"m4",  name:"Doha",           country:"Qatar",       region:"Middle East",   lat:25.2854, lng:51.5310, img:"https://images.unsplash.com/photo-1685113872064-de4180a0ea93?w=600&q=80", tag:"🏙 Modern",    temp:"38°C", price:"From ₹28,000" },
 
   // Europe
   { id:"eu1", name:"Paris",          country:"France",      region:"Europe",        lat:48.8566, lng:2.3522,  img:"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&q=80", tag:"🗼 Romance",   temp:"18°C", price:"From ₹65,000", popular:true },

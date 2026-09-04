@@ -82,6 +82,7 @@ export function createChatTools({ addBooking, removeBooking, updateBooking, plan
             price: item.price,
             rating: item.rating,
             duration: item.duration,
+            img: item.img,
           });
           if (results.length >= 8) break;
         }
@@ -101,6 +102,7 @@ export function createChatTools({ addBooking, removeBooking, updateBooking, plan
         totalPrice: b.totalPrice,
         status: b.status || "confirmed",
         bundleId: b.bundleId || null,
+        img: b.img || null,
       }));
       return { bookingCount: bookings.length, bookings };
     },
@@ -159,6 +161,8 @@ export function createChatTools({ addBooking, removeBooking, updateBooking, plan
 
       return {
         success: true,
+        bookingId: booking.id,
+        bookingLabel: booking.itemName,
         disruptionType: finalType,
         delayMinutes: finalDelay,
         severityScore: result.impact?.severityScore,

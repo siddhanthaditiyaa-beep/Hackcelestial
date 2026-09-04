@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useBooking } from "../context/BookingContext";
 import { sendChatTurn } from "../data/api";
 import { createChatTools } from "../utils/chatTools";
+import { RichText, SearchResultCards, BookingCards, RecoveryOptionCards } from "./ChatCards";
 
 const QUICK_PROMPTS = [
   "Find me hotels in Bali",
@@ -29,7 +30,7 @@ export default function ChatWidget() {
   const { addBooking, removeBooking, updateBooking } = useBooking();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState([]); // [{id, role: 'user'|'assistant', text}]
+  const [messages, setMessages] = useState([]); // [{id, role, text, cards?}]
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [statusText, setStatusText] = useState(null);
@@ -44,8 +45,8 @@ export default function ChatWidget() {
 
   if (!user) return null;
 
-  const pushMessage = (role, text) => {
-    setMessages((prev) => [...prev, { id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, role, text }]);
+  const pushMessage = (role, text, cards = null) => {
+    setMessages((prev) => [...prev, { id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, role, text, cards }]);
   };
 
   const runTurn = async (userText) => {
@@ -54,6 +55,7 @@ export default function ChatWidget() {
     setSending(true);
 
     const tools = createChatTools({ addBooking, removeBooking, updateBooking, planStash: planStashRef.current });
+    let pendingCards = null; // cards derived from the last tool result, attached to the next text bubble
 
     try {
       for (let round = 0; round < MAX_ROUNDS; round++) {
@@ -69,7 +71,10 @@ export default function ChatWidget() {
 
         historyRef.current = [...historyRef.current, res.assistantMessage];
 
-        if (res.text) pushMessage("assistant", res.text);
+        if (res.text) {
+          pushMessage("assistant", res.text, pendingCards);
+          pendingCards = null;
+        }
 
         if (!res.calls || res.calls.length === 0) return;
 
@@ -82,6 +87,15 @@ export default function ChatWidget() {
           } catch (err) {
             result = { success: false, error: err.message || "Tool execution failed" };
           }
+
+          if (call.name === "search_destinations" && result.results?.length) {
+            pendingCards = { kind: "search", items: result.results };
+          } else if (call.name === "get_my_bookings" && result.bookings?.length) {
+            pendingCards = { kind: "bookings", items: result.bookings };
+          } else if (call.name === "simulate_disruption" && result.recoveryOptions?.length) {
+            pendingCards = { kind: "recovery", items: result.recoveryOptions, bookingId: result.bookingId };
+          }
+
           // OpenAI-style tool calling requires one message per call, each
           // tagged with the matching tool_call_id (unlike Gemini, which
           // bundles all function responses into one turn's parts array).
@@ -89,7 +103,7 @@ export default function ChatWidget() {
         }
       }
 
-      pushMessage("assistant", "That's taking longer than expected — mind trying that again?");
+      pushMessage("assistant", "That's taking longer than expected — mind trying that again?", pendingCards);
     } finally {
       setSending(false);
       setStatusText(null);
@@ -101,6 +115,22 @@ export default function ChatWidget() {
     if (!text || sending) return;
     setInput("");
     runTurn(text);
+  };
+
+  const handleBook = (item) => runTurn(`Book "${item.title}" — category ${item.category}, item id ${item.id}.`);
+  const handleSimulate = (booking) => runTurn(`What if my booking "${booking.itemName}" (id: ${booking.id}) gets disrupted?`);
+  const handleCancel = (booking) => runTurn(`Cancel my booking "${booking.itemName}" (id: ${booking.id}).`);
+  const handleApply = (bookingId) => (option) =>
+    runTurn(`Apply the "${option.label}" plan (planId: ${option.planId}) to booking ${bookingId}.`);
+
+  const renderCards = (cards) => {
+    if (!cards) return null;
+    if (cards.kind === "search") return <SearchResultCards results={cards.items} onBook={handleBook} disabled={sending} />;
+    if (cards.kind === "bookings")
+      return <BookingCards bookings={cards.items} onSimulate={handleSimulate} onCancel={handleCancel} disabled={sending} />;
+    if (cards.kind === "recovery")
+      return <RecoveryOptionCards options={cards.items} onApply={handleApply(cards.bookingId)} disabled={sending} />;
+    return null;
   };
 
   return (
@@ -130,7 +160,7 @@ export default function ChatWidget() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 16 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-40 w-full sm:w-[380px] h-full sm:h-[600px] sm:max-h-[calc(100vh-2.5rem)] bg-surface border border-border sm:rounded-lg shadow-md flex flex-col overflow-hidden"
+            className="fixed inset-0 sm:inset-auto sm:bottom-5 sm:right-5 z-40 w-full sm:w-[400px] h-full sm:h-[640px] sm:max-h-[calc(100vh-2.5rem)] bg-surface border border-border sm:rounded-lg shadow-md flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 border-b border-border flex items-center gap-2.5 bg-surface-sunk shrink-0">
@@ -177,23 +207,26 @@ export default function ChatWidget() {
               )}
 
               {messages.map((m) => (
-                <div key={m.id} className={`flex items-start gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div
-                    className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                      m.role === "user" ? "bg-ink text-page" : "bg-brand-dim text-brand"
-                    }`}
-                  >
-                    {m.role === "user" ? <UserIcon className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+                <div key={m.id} className="space-y-2">
+                  <div className={`flex items-start gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+                    <div
+                      className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                        m.role === "user" ? "bg-ink text-page" : "bg-brand-dim text-brand"
+                      }`}
+                    >
+                      {m.role === "user" ? <UserIcon className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    </div>
+                    <div
+                      className={`px-3.5 py-2.5 text-sm max-w-[85%] whitespace-pre-wrap ${
+                        m.role === "user"
+                          ? "bg-ink text-page rounded-lg rounded-tr-sm"
+                          : "bg-surface-sunk border border-border text-ink-dim rounded-lg rounded-tl-sm"
+                      }`}
+                    >
+                      <RichText text={m.text} />
+                    </div>
                   </div>
-                  <div
-                    className={`px-3.5 py-2.5 text-sm max-w-[85%] whitespace-pre-wrap ${
-                      m.role === "user"
-                        ? "bg-ink text-page rounded-lg rounded-tr-sm"
-                        : "bg-surface-sunk border border-border text-ink-dim rounded-lg rounded-tl-sm"
-                    }`}
-                  >
-                    {m.text}
-                  </div>
+                  {m.role === "assistant" && renderCards(m.cards)}
                 </div>
               ))}
 

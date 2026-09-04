@@ -1,14 +1,16 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plane, Train, Building, Tent, Compass, Trash2, Briefcase, Zap, Loader2, ArrowLeft, Luggage, Phone } from "lucide-react";
+import { Plane, Train, Building, Tent, Compass, Trash2, Briefcase, Zap, Loader2, ArrowLeft, Luggage, Phone, UsersRound } from "lucide-react";
 import Modal from "./ui/Modal";
 import RecoveryList from "./RecoveryList";
 import ImpactPanel from "./ImpactPanel";
 import ConciergeCopilotModal from "./ConciergeCopilotModal";
 import StatusBadge from "./ui/StatusBadge";
 import { useBooking } from "../context/BookingContext";
+import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { disruptRealBooking, disruptBundleBooking } from "../data/api";
+import { checkGroupDepartureStatus } from "../data/groupDeparture";
 import { requestNotificationPermission, notify } from "../utils/notifications";
 
 const CATEGORY_ICONS = { flights: Plane, trains: Train, hotels: Building, hostels: Tent, activities: Compass };
@@ -35,12 +37,37 @@ function toEngineBooking(b) {
 
 export default function MyBookingsModal({ onClose }) {
   const { confirmedBookings, removeBooking, updateBooking } = useBooking();
+  const { user } = useAuth();
+  const canSyncFirestore = !!user?.uid && !user?.isDemo;
   const { push } = useToast();
   const [disruptions, setDisruptions] = useState({}); // bookingId -> {impact, aiBrief, recoveryOptions, bookingsById, triggering, applying, resolvedPlan, appliedDiffs, financialSummary}
   const [copilotBookingId, setCopilotBookingId] = useState(null);
+  const [checkingGroup, setCheckingGroup] = useState(null); // bookingId currently being checked
 
   const setState = (bookingId, patch) => {
     setDisruptions((prev) => ({ ...prev, [bookingId]: { ...prev[bookingId], ...patch } }));
+  };
+
+  const handleCheckGroupStatus = async (b) => {
+    setCheckingGroup(b.id);
+    try {
+      const status = await checkGroupDepartureStatus(b.itemId, canSyncFirestore);
+      if (!status) return;
+      if (status.filled) {
+        await updateBooking(b.id, { status: "confirmed" });
+        push("Group confirmed!", `${b.itemName} is on — the group filled. Your booking is now confirmed.`, "resolved");
+      } else if (status.expired) {
+        await updateBooking(b.id, { status: "refunded" });
+        push("Refunded", `${b.itemName} didn't reach the minimum group size in time — you've been refunded.`, "disrupted");
+      } else {
+        push("Still forming", `${status.joinedCount} of ${status.minGroupSize} travelers joined so far.`, "at-risk");
+      }
+    } catch (err) {
+      console.warn("Group status check failed:", err);
+      push("Couldn't check group status", "Please try again in a moment.", "disrupted");
+    } finally {
+      setCheckingGroup(null);
+    }
   };
 
   const { grouped, standalone } = useMemo(() => {
@@ -155,6 +182,11 @@ export default function MyBookingsModal({ onClose }) {
                 <Phone className="h-3 w-3" /> {b.phone}
               </div>
             )}
+            {b.status === "pending-group" && b.groupDeparture && (
+              <div className="text-[11px] text-brand flex items-center gap-1 mt-0.5">
+                <UsersRound className="h-3 w-3" /> Confirms once {b.groupDeparture.minGroupSize} travelers join
+              </div>
+            )}
           </div>
           <div className="text-right shrink-0">
             <div className="font-semibold text-sm text-ink">₹{b.totalPrice?.toLocaleString()}</div>
@@ -167,7 +199,19 @@ export default function MyBookingsModal({ onClose }) {
           </div>
         </div>
 
-        {!state?.impact && !state?.triggering && (
+        {b.status === "pending-group" && (
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleCheckGroupStatus(b)}
+            disabled={checkingGroup === b.id}
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-brand py-2.5 border-t border-border hover:bg-brand-dim transition disabled:opacity-60"
+          >
+            {checkingGroup === b.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UsersRound className="h-3.5 w-3.5" />}
+            Check Group Status
+          </motion.button>
+        )}
+
+        {b.status !== "pending-group" && b.status !== "refunded" && !state?.impact && !state?.triggering && (
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={() => handleSimulate(b)}

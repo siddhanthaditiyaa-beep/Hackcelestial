@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Users, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck, AlertTriangle, Phone } from "lucide-react";
+import { Calendar, Users, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck, AlertTriangle, Phone, UsersRound } from "lucide-react";
 import { useBooking } from "../context/BookingContext";
+import { useAuth } from "../context/AuthContext";
 import { CATEGORY_TINT } from "../utils/visuals";
 import { checkBookingRisk } from "../data/api";
+import { joinGroupDeparture } from "../data/groupDeparture";
 import Modal from "./ui/Modal";
 import MyBookingsModal from "./MyBookingsModal";
 import PaymentMethodPicker from "./ui/PaymentMethodPicker";
@@ -13,6 +15,8 @@ const CATEGORY_KEY = { flights: "flight", trains: "train", hotels: "hotel", host
 
 export default function BookingModal({ item, category, onClose }) {
   const { addBooking } = useBooking();
+  const { user } = useAuth();
+  const canSyncFirestore = !!user?.uid && !user?.isDemo;
   const [step, setStep] = useState(1); // 1=details, 2=payment, 3=success
   const [date, setDate] = useState("");
   const [dateError, setDateError] = useState(false);
@@ -23,6 +27,7 @@ export default function BookingModal({ item, category, onClose }) {
   const [showMyBookings, setShowMyBookings] = useState(false);
   const [riskWarning, setRiskWarning] = useState(null);
   const [dismissedRisk, setDismissedRisk] = useState(false);
+  const [groupStatus, setGroupStatus] = useState(null); // {joinedCount, minGroupSize} once joined, for group-departure items
 
   const Icon = CATEGORY_ICONS[category] || Plane;
   const tint = CATEGORY_TINT[CATEGORY_KEY[category]] || CATEGORY_TINT.flight;
@@ -43,21 +48,46 @@ export default function BookingModal({ item, category, onClose }) {
 
   const handleConfirm = async () => {
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200)); // simulate payment
-    await addBooking({
-      category,
-      itemId: item.id,
-      itemName,
-      date,
-      guests,
-      nights: needsNights ? nights : undefined,
-      totalPrice,
-      img: item.img,
-      phone: item.phone,
-      loc: item.loc,
-    });
-    setStep(3);
-    setLoading(false);
+    try {
+      await new Promise(r => setTimeout(r, 1200)); // simulate payment
+      const booking = await addBooking({
+        category,
+        itemId: item.id,
+        itemName,
+        date,
+        guests,
+        nights: needsNights ? nights : undefined,
+        totalPrice,
+        img: item.img,
+        phone: item.phone,
+        loc: item.loc,
+        status: item.groupDeparture ? "pending-group" : undefined,
+        groupDeparture: item.groupDeparture || undefined,
+      });
+      if (item.groupDeparture) {
+        // The booking itself is already saved at this point regardless of
+        // what happens next — if joining the shared group count fails (e.g.
+        // a transient Firestore hiccup), the booking still exists as
+        // "pending-group" and "Check Group Status" in My Bookings will
+        // retry the same call later, so this is recoverable, not fatal.
+        try {
+          const status = await joinGroupDeparture(
+            item.id,
+            booking.id,
+            item.groupDeparture.minGroupSize,
+            item.groupDeparture.deadlineDays,
+            canSyncFirestore
+          );
+          setGroupStatus(status);
+        } catch (err) {
+          console.warn("Failed to join group departure count:", err);
+          setGroupStatus({ joinedCount: null, minGroupSize: item.groupDeparture.minGroupSize });
+        }
+      }
+      setStep(3);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (showMyBookings) {
@@ -76,17 +106,35 @@ export default function BookingModal({ item, category, onClose }) {
           >
             <CheckCircle className="h-10 w-10 text-status-resolved" />
           </motion.div>
-          <h2 className="font-display font-semibold text-2xl text-ink mb-2">Booking Confirmed!</h2>
+          <h2 className="font-display font-semibold text-2xl text-ink mb-2">
+            {groupStatus ? "You're In!" : "Booking Confirmed!"}
+          </h2>
           <p className="text-ink-dim text-sm mb-2">{itemName}</p>
           <p className="text-2xl font-bold text-ink mb-1">₹{totalPrice.toLocaleString()}</p>
           <p className="text-xs text-ink-faint mb-7">Payment successful · Confirmation sent to your email</p>
-          <div className="bg-status-resolved-dim border border-status-resolved/20 rounded-md p-4 text-left mb-6">
-            <div className="flex items-center gap-2 text-status-resolved font-semibold text-sm mb-1">
-              <ShieldCheck className="h-4 w-4" />
-              Recoup AI Protection Active
+
+          {groupStatus ? (
+            <div className="bg-brand-dim border border-brand/20 rounded-md p-4 text-left mb-6">
+              <div className="flex items-center gap-2 text-brand font-semibold text-sm mb-1">
+                <UsersRound className="h-4 w-4" />
+                {groupStatus.joinedCount != null
+                  ? `You're traveler ${groupStatus.joinedCount} of ${groupStatus.minGroupSize} needed`
+                  : `Group departure — needs ${groupStatus.minGroupSize} travelers`}
+              </div>
+              <p className="text-xs text-ink-dim">
+                This is a group departure — it confirms automatically once {groupStatus.minGroupSize} travelers have joined.
+                If the group doesn't fill in time, you're refunded automatically. Check progress anytime from My Bookings.
+              </p>
             </div>
-            <p className="text-xs text-ink-dim">If anything goes wrong with this booking, our AI will automatically find alternatives and recover your trip.</p>
-          </div>
+          ) : (
+            <div className="bg-status-resolved-dim border border-status-resolved/20 rounded-md p-4 text-left mb-6">
+              <div className="flex items-center gap-2 text-status-resolved font-semibold text-sm mb-1">
+                <ShieldCheck className="h-4 w-4" />
+                Recoup AI Protection Active
+              </div>
+              <p className="text-xs text-ink-dim">If anything goes wrong with this booking, our AI will automatically find alternatives and recover your trip.</p>
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <button onClick={() => setShowMyBookings(true)}
               className="w-full py-3.5 rounded-sm bg-ink text-page font-bold text-sm hover:opacity-90 transition">

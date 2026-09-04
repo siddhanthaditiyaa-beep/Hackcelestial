@@ -53,6 +53,18 @@ export const STATUS_STYLES = {
     dot: "bg-status-resolved",
     label: "Resolved",
   },
+  "pending-group": {
+    badgeBg: "bg-brand-dim",
+    badgeText: "text-brand",
+    dot: "bg-brand",
+    label: "Forming group",
+  },
+  refunded: {
+    badgeBg: "bg-surface-sunk",
+    badgeText: "text-ink-faint",
+    dot: "bg-ink-faint",
+    label: "Refunded",
+  },
 };
 
 export const CATEGORY_TINT = {

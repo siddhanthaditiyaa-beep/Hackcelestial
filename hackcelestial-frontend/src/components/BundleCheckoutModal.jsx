@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, CreditCard, ShieldCheck, Clock } from "lucide-react";
+import { CheckCircle, CreditCard, ShieldCheck, Clock, Calendar } from "lucide-react";
 import { useBooking } from "../context/BookingContext";
 import Modal from "./ui/Modal";
+import PaymentMethodPicker from "./ui/PaymentMethodPicker";
 
 function parsePrice(price) {
   return parseInt(String(price || "0").replace(/[^0-9]/g, ""), 10) || 0;
@@ -45,7 +46,10 @@ function buildBundlePayload(items) {
 
 export default function BundleCheckoutModal({ items, onClose, onDone }) {
   const { addBooking } = useBooking();
-  const [step, setStep] = useState(1); // 1=review, 2=success
+  const [step, setStep] = useState(1); // 1=review+date, 2=payment, 3=success
+  const [date, setDate] = useState("");
+  const [dateError, setDateError] = useState(false);
+  const [paymentValid, setPaymentValid] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const total = items.reduce((sum, { item }) => sum + parsePrice(item.price), 0);
@@ -61,7 +65,7 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
           category,
           itemId: item.id,
           itemName: itemLabel(category, item),
-          date: "",
+          date,
           guests: 1,
           totalPrice: parsePrice(item.price),
           img: item.img,
@@ -70,13 +74,13 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
         })
       )
     );
-    setStep(2);
+    setStep(3);
     setLoading(false);
   };
 
   return (
-    <Modal onClose={step === 1 ? onClose : undefined} closeOnBackdrop={step === 1} showCloseButton={step === 1} maxWidth="max-w-lg">
-      {step === 1 ? (
+    <Modal onClose={step !== 3 ? onClose : undefined} closeOnBackdrop={step !== 3} showCloseButton={step !== 3} maxWidth="max-w-lg">
+      {step === 1 && (
         <>
           <div className="bg-brand p-6">
             <div className="text-white/70 text-xs font-semibold uppercase tracking-wide">Trip Bundle</div>
@@ -91,15 +95,55 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
                 </div>
               ))}
             </div>
+
+            <div>
+              <label className="text-xs font-semibold text-ink-dim uppercase tracking-wide block mb-1.5">
+                <Calendar className="inline h-3.5 w-3.5 mr-1" />Trip Date
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => { setDate(e.target.value); setDateError(false); }}
+                className={`w-full bg-surface-sunk border rounded-sm px-4 py-3 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/10 transition ${dateError ? "border-status-disrupted" : "border-border focus:border-brand/50"}`}
+              />
+              {dateError && <p className="text-xs text-status-disrupted mt-1.5">Please select a date to continue.</p>}
+            </div>
+
             <div className="bg-surface-sunk rounded-sm p-4 flex items-center justify-between border border-border">
               <span className="text-sm font-semibold text-ink-dim flex items-center gap-1.5"><CreditCard className="h-4 w-4" /> Total Payable</span>
               <span className="font-display font-semibold text-xl text-ink">₹{total.toLocaleString()}</span>
             </div>
             <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={() => date ? setStep(2) : setDateError(true)}
+              className="w-full py-3.5 rounded-sm bg-brand text-brand-ink font-bold text-sm hover:brightness-105 transition shadow-sm"
+            >
+              Continue to Payment →
+            </motion.button>
+          </div>
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <div className="bg-brand p-6">
+            <div className="text-white/70 text-xs font-semibold uppercase tracking-wide">Trip Bundle</div>
+            <h2 className="font-display font-semibold text-white text-lg">Payment</h2>
+          </div>
+          <div className="p-6 space-y-4 overflow-y-auto">
+            <button onClick={() => setStep(1)} className="text-xs text-ink-faint hover:text-ink-dim transition">← Back</button>
+
+            <PaymentMethodPicker amount={total} onValidityChange={setPaymentValid} />
+
+            <div className="bg-surface-sunk rounded-sm p-4 flex items-center justify-between border border-border">
+              <span className="text-sm font-semibold text-ink-dim">Total Payable</span>
+              <span className="font-display font-semibold text-xl text-ink">₹{total.toLocaleString()}</span>
+            </div>
+            <motion.button
               whileTap={!loading ? { scale: 0.98 } : {}}
               onClick={handleConfirm}
-              disabled={loading}
-              className="w-full py-3.5 rounded-sm bg-brand text-brand-ink font-bold text-sm hover:brightness-105 transition shadow-sm disabled:opacity-70 flex items-center justify-center gap-2"
+              disabled={loading || !paymentValid}
+              className="w-full py-3.5 rounded-sm bg-brand text-brand-ink font-bold text-sm hover:brightness-105 transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
@@ -112,7 +156,9 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
             <p className="text-center text-xs text-ink-faint">256-bit SSL encrypted · PCI DSS compliant</p>
           </div>
         </>
-      ) : (
+      )}
+
+      {step === 3 && (
         <div className="p-10 text-center">
           <motion.div
             initial={{ scale: 0 }} animate={{ scale: 1 }}

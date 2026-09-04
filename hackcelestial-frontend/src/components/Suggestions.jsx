@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Lightbulb, Plus, ThumbsUp, Sparkles, RotateCw, MapPin } from "lucide-react";
+import { Lightbulb, Plus, ThumbsUp, Sparkles, MapPin } from "lucide-react";
 import { getAITripSuggestions } from "../data/api";
 import { useBooking } from "../context/BookingContext";
+import { useAuth } from "../context/AuthContext";
+import { fetchSuggestions, addSuggestion, upvoteSuggestion } from "../data/community";
 import Autocomplete from "./ui/Autocomplete";
 import Skeleton from "./ui/Skeleton";
 
@@ -15,14 +17,21 @@ const VIBE_TINT = {
   practical: "bg-cat-flight/10 text-flight",
 };
 
+// Shown only when a destination has no real community suggestions yet —
+// never written anywhere, purely a friendly empty-state.
 const SEED_SUGGESTIONS = [
-  { id: 1, text: "Try the street food at the night market, it's amazing and cheap!", author: "TravelPro99", upvotes: 12 },
-  { id: 2, text: "Book your hotel near the central station to save time on commuting.", author: "ExplorerAditi", upvotes: 8 },
-  { id: 3, text: "Don't forget to pack a universal adapter.", author: "NomadSam", upvotes: 3 },
+  { id: "seed_1", text: "Try the street food at the night market, it's amazing and cheap!", author: "TravelPro99", upvotes: 12 },
+  { id: "seed_2", text: "Book your hotel near the central station to save time on commuting.", author: "ExplorerAditi", upvotes: 8 },
+  { id: "seed_3", text: "Don't forget to pack a universal adapter.", author: "NomadSam", upvotes: 3 },
 ];
+
+const REFRESH_MIN_MS = 120_000;
+const REFRESH_JITTER_MS = 60_000;
 
 export default function Suggestions({ destination: destinationProp }) {
   const { confirmedBookings, savedDestinations } = useBooking();
+  const { user } = useAuth();
+  const canSyncFirestore = !!user?.uid && !user?.isDemo;
 
   const defaultDestination = useMemo(() => {
     if (destinationProp) return destinationProp;
@@ -34,10 +43,12 @@ export default function Suggestions({ destination: destinationProp }) {
   }, [destinationProp, confirmedBookings, savedDestinations]);
 
   const [destination, setDestination] = useState(defaultDestination);
-  const [suggestions, setSuggestions] = useState(SEED_SUGGESTIONS);
+  const [suggestions, setSuggestions] = useState([]);
   const [newSuggestion, setNewSuggestion] = useState("");
   const [aiTips, setAiTips] = useState([]);
   const [loadingTips, setLoadingTips] = useState(true);
+
+  const destinationId = destination.trim().toLowerCase();
 
   const loadTips = async (refresh = false) => {
     setLoadingTips(true);
@@ -51,22 +62,52 @@ export default function Suggestions({ destination: destinationProp }) {
     }
   };
 
-  useEffect(() => { loadTips(); }, [destination]); // eslint-disable-line react-hooks/exhaustive-deps
+  const loadSuggestions = async () => {
+    try {
+      const list = await fetchSuggestions(destinationId, canSyncFirestore);
+      setSuggestions(list);
+    } catch {
+      setSuggestions([]);
+    }
+  };
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    loadTips();
+    loadSuggestions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destination]);
+
+  // Auto-refresh instead of a manual button — re-fetches AI tips (bypassing
+  // their cache) and the latest community suggestions every ~2-3 minutes.
+  useEffect(() => {
+    const delay = REFRESH_MIN_MS + Math.random() * REFRESH_JITTER_MS;
+    const id = setInterval(() => {
+      loadTips(true);
+      loadSuggestions();
+    }, delay);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [destination]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newSuggestion.trim()) return;
-
-    setSuggestions([
-      { id: Date.now(), text: newSuggestion, author: "Current User", upvotes: 0 },
-      ...suggestions
-    ]);
+    const entry = await addSuggestion(
+      destinationId,
+      destination,
+      { text: newSuggestion, author: user?.displayName || user?.profile?.displayName || "Traveler" },
+      canSyncFirestore
+    );
+    setSuggestions((prev) => [entry, ...prev]);
     setNewSuggestion("");
   };
 
-  const handleUpvote = (id) => {
-    setSuggestions(suggestions.map(s => s.id === id ? { ...s, upvotes: s.upvotes + 1 } : s));
+  const handleUpvote = async (id) => {
+    setSuggestions((prev) => prev.map((s) => (s.id === id ? { ...s, upvotes: (s.upvotes || 0) + 1 } : s)));
+    upvoteSuggestion(id, canSyncFirestore).catch(() => {});
   };
+
+  const displaySuggestions = suggestions.length > 0 ? suggestions : SEED_SUGGESTIONS;
 
   return (
     <div className="bg-page rounded-lg shadow-sm px-4 md:px-8 py-8 border border-border mt-8">
@@ -93,14 +134,9 @@ export default function Suggestions({ destination: destinationProp }) {
 
       {/* AI Tips */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-status-resolved">
-            <Sparkles className="h-3.5 w-3.5" /> Recoup AI Tips
-          </span>
-          <button onClick={() => loadTips(true)} disabled={loadingTips} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-faint hover:text-brand transition disabled:opacity-50">
-            <RotateCw className={`h-3 w-3 ${loadingTips ? "animate-spin" : ""}`} /> Refresh
-          </button>
-        </div>
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-status-resolved mb-3">
+          <Sparkles className="h-3.5 w-3.5" /> Recoup AI Tips
+        </span>
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {(loadingTips ? Array.from({ length: 4 }) : aiTips).map((tip, i) => (
             <motion.div
@@ -133,7 +169,7 @@ export default function Suggestions({ destination: destinationProp }) {
 
       <div className="grid md:grid-cols-[1fr_300px] gap-8">
         <div className="space-y-4">
-          {suggestions.map((s) => (
+          {displaySuggestions.map((s) => (
             <div key={s.id} className="p-5 rounded-md bg-surface border border-border shadow-sm flex gap-4">
               <div className="flex-1">
                 <p className="text-sm text-ink mb-2 leading-relaxed">{s.text}</p>
@@ -144,7 +180,7 @@ export default function Suggestions({ destination: destinationProp }) {
                 className="flex flex-col items-center justify-center h-12 w-12 rounded-sm bg-surface-sunk border border-border/50 hover:bg-brand-dim hover:border-brand/30 transition text-ink-dim hover:text-brand group"
               >
                 <ThumbsUp className="h-3.5 w-3.5 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-[10px] font-bold">{s.upvotes}</span>
+                <span className="text-[10px] font-bold">{s.upvotes || 0}</span>
               </button>
             </div>
           ))}

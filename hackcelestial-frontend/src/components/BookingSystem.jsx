@@ -255,7 +255,6 @@ export default function BookingSystem() {
   const [viewMode, setViewMode] = useState("grid");
   const [mapCenter, setMapCenter] = useState([20, 78]);
   const [mapZoom, setMapZoom] = useState(4);
-  const [selectedDest, setSelectedDest] = useState(null);
   const [showAllDests, setShowAllDests] = useState(false);
   const [aiInsights, setAiInsights] = useState([]);
   const [loadingInsights, setLoadingInsights] = useState(true);
@@ -272,10 +271,18 @@ export default function BookingSystem() {
   const filteredDests = useMemo(() => {
     let d = ALL_DESTINATIONS;
     if (selectedRegion !== "All") d = d.filter(x => x.region === selectedRegion);
-    if (searchQuery.trim()) d = d.filter(x =>
-      x.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      x.country.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      d = d.filter(x => x.name.toLowerCase().includes(q) || x.country.toLowerCase().includes(q));
+      // Name matches read as "relevant"; country-only matches (e.g. "s" in
+      // "Bali" only via "Indonesia") read as arbitrary for short queries —
+      // rank the former first instead of leaving result order arbitrary.
+      d = [...d].sort((a, b) => {
+        const aName = a.name.toLowerCase().includes(q) ? 0 : 1;
+        const bName = b.name.toLowerCase().includes(q) ? 0 : 1;
+        return aName - bName;
+      });
+    }
     return d;
   }, [selectedRegion, searchQuery]);
 
@@ -459,8 +466,8 @@ export default function BookingSystem() {
             </h2>
             <span className="text-xs text-ink-faint">{currentResults.length} results · AI-sorted</span>
           </div>
-          <div className={`grid gap-6 ${selectedItemForReview ? "lg:grid-cols-[1fr_380px]" : ""}`}>
-            <div className={`grid gap-4 ${
+          <div className={`grid gap-6 min-w-0 ${selectedItemForReview ? "lg:grid-cols-[1fr_380px]" : ""}`}>
+            <div className={`grid gap-4 min-w-0 ${
               selectedItemForReview
                 ? "grid-cols-1"
                 : activeTab === "flights" || activeTab === "trains"
@@ -479,10 +486,17 @@ export default function BookingSystem() {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="lg:sticky lg:top-6"
+                  className="lg:sticky lg:top-6 min-w-0"
                 >
                   <Reviews
-                    itemName={selectedItemForReview.name || selectedItemForReview.title}
+                    itemKey={selectedItemForReview.id}
+                    itemName={
+                      selectedItemForReview.name ||
+                      selectedItemForReview.title ||
+                      (selectedItemForReview.airline
+                        ? `${selectedItemForReview.airline} · ${selectedItemForReview.from} → ${selectedItemForReview.to}`
+                        : "Booking")
+                    }
                     onClose={() => setSelectedItemForReview(null)}
                   />
                 </motion.div>
@@ -585,7 +599,7 @@ export default function BookingSystem() {
                 />
                 <MapFlyTo center={mapCenter} zoom={mapZoom} />
                 {filteredDests.map(d => (
-                  <Marker key={d.id} position={[d.lat, d.lng]} eventHandlers={{ click: () => { setSelectedDest(d); setMapCenter([d.lat, d.lng]); setMapZoom(10); } }}>
+                  <Marker key={d.id} position={[d.lat, d.lng]} eventHandlers={{ click: () => { setMapCenter([d.lat, d.lng]); setMapZoom(10); } }}>
                     <Popup>
                       <div className="text-center min-w-[160px]">
                         <img src={d.img} alt={d.name} className="w-full h-20 object-cover rounded-lg mb-2" />
@@ -593,6 +607,13 @@ export default function BookingSystem() {
                         <div className="text-xs text-gray-500">{d.country} · {d.temp}</div>
                         <div className="text-xs font-bold mt-1" style={{ color: "#a9791f" }}>{d.price}</div>
                         <div className="text-[10px] text-gray-400 mt-0.5">{d.tag}</div>
+                        <button
+                          onClick={() => setPackageDest(d)}
+                          className="mt-2 w-full py-1.5 rounded text-white text-xs font-bold"
+                          style={{ background: "#a9791f" }}
+                        >
+                          View Photos & Book
+                        </button>
                       </div>
                     </Popup>
                   </Marker>

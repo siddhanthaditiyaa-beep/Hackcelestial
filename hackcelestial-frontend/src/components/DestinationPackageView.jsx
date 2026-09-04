@@ -16,10 +16,15 @@ function normalize(str) {
 }
 
 function destKeywords(dest) {
+  // Deliberately NOT including dest.country here: inventory `loc` strings
+  // are place-names, and a couple of them spell out their country (e.g.
+  // "Kerala, India") — a country-level keyword like "india" would then
+  // substring-match every same-country destination's inventory regardless
+  // of actual relevance (this was the root cause of Manali/Andaman Islands
+  // showing unrelated Kerala/Delhi hotels).
   const words = new Set();
   normalize(dest.name).split(/\s+/).forEach((w) => w.length > 2 && words.add(w));
   words.add(normalize(dest.name));
-  words.add(normalize(dest.country));
   return [...words];
 }
 

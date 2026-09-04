@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Users, CreditCard, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Calendar, Users, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useBooking } from "../context/BookingContext";
 import { CATEGORY_TINT } from "../utils/visuals";
 import { checkBookingRisk } from "../data/api";
 import Modal from "./ui/Modal";
 import MyBookingsModal from "./MyBookingsModal";
+import PaymentMethodPicker from "./ui/PaymentMethodPicker";
 
 const CATEGORY_ICONS = { flights: Plane, trains: Train, hotels: Building, hostels: Tent, activities: Compass };
 const CATEGORY_KEY = { flights: "flight", trains: "train", hotels: "hotel", hostels: "hostel", activities: "activity" };
@@ -14,9 +15,10 @@ export default function BookingModal({ item, category, onClose }) {
   const { addBooking } = useBooking();
   const [step, setStep] = useState(1); // 1=details, 2=payment, 3=success
   const [date, setDate] = useState("");
+  const [dateError, setDateError] = useState(false);
   const [guests, setGuests] = useState(1);
   const [nights, setNights] = useState(2);
-  const [paymentTab, setPaymentTab] = useState("card");
+  const [paymentValid, setPaymentValid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showMyBookings, setShowMyBookings] = useState(false);
   const [riskWarning, setRiskWarning] = useState(null);
@@ -99,15 +101,15 @@ export default function BookingModal({ item, category, onClose }) {
           {/* Header */}
           <div className={`${tint.bg} p-6 relative`}>
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-sm bg-white/20 backdrop-blur flex items-center justify-center">
+              <div className="h-12 w-12 rounded-sm bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
                 <Icon className="h-6 w-6 text-white" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="text-white/70 text-xs font-semibold uppercase tracking-wide">{category}</div>
-                <h2 className="font-display font-semibold text-white text-lg leading-tight">{itemName}</h2>
-                <div className="flex items-center gap-2 text-white/70 text-xs mt-0.5">
-                  {item.loc && <><MapPin className="h-3 w-3" />{item.loc}</>}
-                  {item.rating && <><Star className="h-3 w-3 fill-white/70" />{item.rating}</>}
+                <h2 className="font-display font-semibold text-white text-lg leading-tight truncate">{itemName}</h2>
+                <div className="flex items-center gap-2 text-white/70 text-xs mt-0.5 min-w-0">
+                  {item.loc && <span className="inline-flex items-center gap-1 min-w-0"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{item.loc}</span></span>}
+                  {item.rating && <span className="inline-flex items-center gap-1 shrink-0"><Star className="h-3 w-3 fill-white/70" />{item.rating}</span>}
                 </div>
               </div>
             </div>
@@ -132,8 +134,9 @@ export default function BookingModal({ item, category, onClose }) {
                     <Calendar className="inline h-3.5 w-3.5 mr-1" />
                     {needsNights ? "Check-in Date" : "Date"}
                   </label>
-                  <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                    className="w-full bg-surface-sunk border border-border rounded-sm px-4 py-3 text-sm text-ink outline-none focus:border-brand/50 focus:ring-2 focus:ring-brand/10 transition" />
+                  <input type="date" value={date} onChange={e => { setDate(e.target.value); setDateError(false); }}
+                    className={`w-full bg-surface-sunk border rounded-sm px-4 py-3 text-sm text-ink outline-none focus:ring-2 focus:ring-brand/10 transition ${dateError ? "border-status-disrupted" : "border-border focus:border-brand/50"}`} />
+                  {dateError && <p className="text-xs text-status-disrupted mt-1.5">Please select a date to continue.</p>}
                 </div>
 
                 {/* Nights (for hotels/hostels) */}
@@ -169,7 +172,7 @@ export default function BookingModal({ item, category, onClose }) {
                   <div className="font-display font-semibold text-xl text-ink">₹{totalPrice.toLocaleString()}</div>
                 </div>
 
-                <motion.button whileTap={{ scale: 0.98 }} onClick={() => setStep(2)}
+                <motion.button whileTap={{ scale: 0.98 }} onClick={() => date ? setStep(2) : setDateError(true)}
                   className={`w-full py-3.5 rounded-sm ${tint.bg} text-white font-bold text-sm hover:brightness-105 transition shadow-sm`}>
                   Continue to Payment →
                 </motion.button>
@@ -180,39 +183,7 @@ export default function BookingModal({ item, category, onClose }) {
               <>
                 <button onClick={() => setStep(1)} className="text-xs text-ink-faint hover:text-ink-dim transition">← Back</button>
 
-                {/* Payment method tabs */}
-                <div>
-                  <label className="text-xs font-semibold text-ink-dim uppercase tracking-wide block mb-2">
-                    <CreditCard className="inline h-3.5 w-3.5 mr-1" />Payment Method
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[["card","💳 Card"], ["upi","📱 UPI"], ["netbanking","🏦 Net Banking"]].map(([id, label]) => (
-                      <button key={id} onClick={() => setPaymentTab(id)}
-                        className={`py-2.5 rounded-sm text-xs font-semibold border transition ${paymentTab===id ? "border-brand bg-brand-dim text-brand" : "border-border text-ink-dim hover:border-border-strong"}`}>
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {paymentTab === "card" && (
-                  <div className="space-y-3">
-                    <input placeholder="Card number" className="w-full bg-surface-sunk border border-border rounded-sm px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-brand/50 transition" />
-                    <div className="grid grid-cols-2 gap-2">
-                      <input placeholder="MM / YY" className="bg-surface-sunk border border-border rounded-sm px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-brand/50 transition" />
-                      <input placeholder="CVV" className="bg-surface-sunk border border-border rounded-sm px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-brand/50 transition" />
-                    </div>
-                    <input placeholder="Name on card" className="w-full bg-surface-sunk border border-border rounded-sm px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-brand/50 transition" />
-                  </div>
-                )}
-                {paymentTab === "upi" && (
-                  <input placeholder="Enter UPI ID (e.g. user@paytm)" className="w-full bg-surface-sunk border border-border rounded-sm px-4 py-3 text-sm text-ink placeholder:text-ink-faint outline-none focus:border-brand/50 transition" />
-                )}
-                {paymentTab === "netbanking" && (
-                  <select className="w-full bg-surface-sunk border border-border rounded-sm px-4 py-3 text-sm text-ink outline-none focus:border-brand/50 transition">
-                    <option>SBI</option><option>HDFC</option><option>ICICI</option><option>Axis</option><option>Kotak</option>
-                  </select>
-                )}
+                <PaymentMethodPicker amount={totalPrice} onValidityChange={setPaymentValid} />
 
                 {/* Final total */}
                 <div className="bg-surface-sunk rounded-sm p-4 flex items-center justify-between border border-border">
@@ -220,8 +191,8 @@ export default function BookingModal({ item, category, onClose }) {
                   <span className="font-display font-semibold text-xl text-ink">₹{totalPrice.toLocaleString()}</span>
                 </div>
 
-                <motion.button whileTap={!loading ? { scale: 0.98 } : {}} onClick={handleConfirm} disabled={loading}
-                  className={`w-full py-3.5 rounded-sm ${tint.bg} text-white font-bold text-sm hover:brightness-105 transition shadow-sm disabled:opacity-70 flex items-center justify-center gap-2`}>
+                <motion.button whileTap={!loading ? { scale: 0.98 } : {}} onClick={handleConfirm} disabled={loading || !paymentValid}
+                  className={`w-full py-3.5 rounded-sm ${tint.bg} text-white font-bold text-sm hover:brightness-105 transition shadow-sm disabled:opacity-50 flex items-center justify-center gap-2`}>
                   {loading ? (
                     <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
                       <Clock className="h-4 w-4" />

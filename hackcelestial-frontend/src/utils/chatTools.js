@@ -120,6 +120,8 @@ export function createChatTools({ addBooking, removeBooking, updateBooking, plan
         guests: guests || 1,
         totalPrice: parsePrice(item.price),
         img: item.img,
+        phone: item.phone,
+        loc: item.loc,
         dependsOn: [],
       });
       return { success: true, bookingId: booking.id, itemName: booking.itemName, totalPrice: booking.totalPrice };

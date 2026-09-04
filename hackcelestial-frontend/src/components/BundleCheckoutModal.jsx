@@ -69,6 +69,8 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
           guests: 1,
           totalPrice: parsePrice(item.price),
           img: item.img,
+          phone: item.phone,
+          loc: item.loc,
           bundleId,
           dependsOn,
         })

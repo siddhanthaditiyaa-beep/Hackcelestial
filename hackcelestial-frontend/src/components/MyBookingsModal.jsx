@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plane, Train, Building, Tent, Compass, Trash2, Briefcase, Zap, Loader2, ArrowLeft, Luggage } from "lucide-react";
+import { Plane, Train, Building, Tent, Compass, Trash2, Briefcase, Zap, Loader2, ArrowLeft, Luggage, Phone } from "lucide-react";
 import Modal from "./ui/Modal";
 import RecoveryList from "./RecoveryList";
 import ImpactPanel from "./ImpactPanel";
@@ -150,6 +150,11 @@ export default function MyBookingsModal({ onClose }) {
               <span>{b.date || "Date pending"} · {b.guests} guest{b.guests > 1 ? "s" : ""}{b.nights ? ` · ${b.nights} nights` : ""}</span>
               {b.status && <StatusBadge status={b.status} />}
             </div>
+            {b.phone && (
+              <div className="text-[11px] text-ink-faint flex items-center gap-1 mt-0.5">
+                <Phone className="h-3 w-3" /> {b.phone}
+              </div>
+            )}
           </div>
           <div className="text-right shrink-0">
             <div className="font-semibold text-sm text-ink">₹{b.totalPrice?.toLocaleString()}</div>

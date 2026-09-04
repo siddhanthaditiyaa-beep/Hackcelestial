@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Users, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Calendar, Users, CheckCircle, Plane, Train, Building, Tent, Compass, MapPin, Clock, Star, ShieldCheck, AlertTriangle, Phone } from "lucide-react";
 import { useBooking } from "../context/BookingContext";
 import { CATEGORY_TINT } from "../utils/visuals";
 import { checkBookingRisk } from "../data/api";
@@ -53,6 +53,8 @@ export default function BookingModal({ item, category, onClose }) {
       nights: needsNights ? nights : undefined,
       totalPrice,
       img: item.img,
+      phone: item.phone,
+      loc: item.loc,
     });
     setStep(3);
     setLoading(false);
@@ -111,6 +113,11 @@ export default function BookingModal({ item, category, onClose }) {
                   {item.loc && <span className="inline-flex items-center gap-1 min-w-0"><MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{item.loc}</span></span>}
                   {item.rating && <span className="inline-flex items-center gap-1 shrink-0"><Star className="h-3 w-3 fill-white/70" />{item.rating}</span>}
                 </div>
+                {item.phone && (
+                  <div className="flex items-center gap-1 text-white/70 text-xs mt-1">
+                    <Phone className="h-3 w-3 shrink-0" /> {item.phone}
+                  </div>
+                )}
               </div>
             </div>
           </div>

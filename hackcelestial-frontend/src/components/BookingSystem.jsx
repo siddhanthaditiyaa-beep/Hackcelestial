@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import {
   Search, MapPin, Calendar, Users, Star, Sparkles, ArrowRight,
@@ -93,6 +93,37 @@ function MapFlyTo({ center, zoom }) {
   useEffect(() => { map.flyTo(center, zoom, { duration: 1.5 }); }, [center, zoom]);
   return null;
 }
+
+// Great-circle interpolation (spherical slerp) between two [lat,lng] points —
+// draws a flight-path-style curve rather than a straight line across the
+// flat map projection. No routing API needed/appropriate here since most
+// destinations are overseas (road routers like OSRM/Geoapify can't route
+// Mumbai -> Bali at all).
+function greatCircleArc([lat1, lng1], [lat2, lng2], numPoints = 64) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const toDeg = (r) => (r * 180) / Math.PI;
+  const φ1 = toRad(lat1), λ1 = toRad(lng1);
+  const φ2 = toRad(lat2), λ2 = toRad(lng2);
+  const d = 2 * Math.asin(Math.sqrt(
+    Math.sin((φ2 - φ1) / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin((λ2 - λ1) / 2) ** 2
+  ));
+  if (d === 0) return [[lat1, lng1], [lat2, lng2]];
+  const points = [];
+  for (let i = 0; i <= numPoints; i++) {
+    const f = i / numPoints;
+    const A = Math.sin((1 - f) * d) / Math.sin(d);
+    const B = Math.sin(f * d) / Math.sin(d);
+    const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2);
+    const y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2);
+    const z = A * Math.sin(φ1) + B * Math.sin(φ2);
+    const φi = Math.atan2(z, Math.sqrt(x * x + y * y));
+    const λi = Math.atan2(y, x);
+    points.push([toDeg(φi), toDeg(λi)]);
+  }
+  return points;
+}
+
+const HOME_BASE = { lat: 19.0760, lng: 72.8777 }; // Mumbai — matches the flight search's implicit default origin
 
 /* ── PER-CATEGORY CARD RENDERERS (share ResultCard chrome) ── */
 function renderFlightCard(item, { onReview, onBook }) {
@@ -273,15 +304,17 @@ export default function BookingSystem() {
     if (selectedRegion !== "All") d = d.filter(x => x.region === selectedRegion);
     const q = searchQuery.trim().toLowerCase();
     if (q) {
-      d = d.filter(x => x.name.toLowerCase().includes(q) || x.country.toLowerCase().includes(q));
+      // Bidirectional: a query like "Denpasar (Bali)" (the raw label the
+      // autocomplete hands back from handleSearch) doesn't literally
+      // contain any destination's full name as a substring in the other
+      // direction, but it DOES contain "bali" — so match either way.
+      const nameMatch = (x) => x.name.toLowerCase().includes(q) || q.includes(x.name.toLowerCase());
+      const countryMatch = (x) => x.country.toLowerCase().includes(q) || q.includes(x.country.toLowerCase());
+      d = d.filter(x => nameMatch(x) || countryMatch(x));
       // Name matches read as "relevant"; country-only matches (e.g. "s" in
       // "Bali" only via "Indonesia") read as arbitrary for short queries —
       // rank the former first instead of leaving result order arbitrary.
-      d = [...d].sort((a, b) => {
-        const aName = a.name.toLowerCase().includes(q) ? 0 : 1;
-        const bName = b.name.toLowerCase().includes(q) ? 0 : 1;
-        return aName - bName;
-      });
+      d = [...d].sort((a, b) => (nameMatch(a) ? 0 : 1) - (nameMatch(b) ? 0 : 1));
     }
     return d;
   }, [selectedRegion, searchQuery]);
@@ -598,6 +631,12 @@ export default function BookingSystem() {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <MapFlyTo center={mapCenter} zoom={mapZoom} />
+                {searchQuery.trim() && filteredDests[0] && (
+                  <Polyline
+                    positions={greatCircleArc([HOME_BASE.lat, HOME_BASE.lng], [filteredDests[0].lat, filteredDests[0].lng])}
+                    pathOptions={{ color: "#A9791F", weight: 2.5, dashArray: "6 8", opacity: 0.85 }}
+                  />
+                )}
                 {filteredDests.map(d => (
                   <Marker key={d.id} position={[d.lat, d.lng]} eventHandlers={{ click: () => { setMapCenter([d.lat, d.lng]); setMapZoom(10); } }}>
                     <Popup>

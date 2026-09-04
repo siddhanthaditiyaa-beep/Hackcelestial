@@ -11,7 +11,7 @@ const QUICK_PROMPTS = [
   "Find me hotels in Bali",
   "Show my bookings",
   "What if my flight gets delayed?",
-  "Find cheap flights to Goa",
+  "Guide me around what I've booked",
 ];
 
 const TOOL_LABELS = {

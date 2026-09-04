@@ -15,6 +15,45 @@ function generateWithTimeout(params, timeoutMs = 12_000) {
   ]);
 }
 
+// One retry with a short delay on a transient error (rate limit / overload /
+// our own timeout) before the caller falls through to its static fallback.
+// Not a queue or real rate limiter — just enough to smooth over a blip.
+async function generateWithRetry(params, { timeoutMs = 12_000, retryDelayMs = 800 } = {}) {
+  try {
+    return await generateWithTimeout(params, timeoutMs);
+  } catch (err) {
+    const status = err?.status;
+    const retryable = status === 429 || status === 503 || /timed out/i.test(err?.message || "");
+    if (!retryable) throw err;
+    await new Promise((r) => setTimeout(r, retryDelayMs));
+    return generateWithTimeout(params, timeoutMs);
+  }
+}
+
+// Tiny in-memory TTL cache for the two "content" AI calls (insights, trip
+// suggestions) — these get called from component mounts/tab switches far
+// more often than a user actually wants fresh content, so a short cache cuts
+// real duplicate load. Deliberately NOT used for recovery options / incident
+// briefs, which must reflect the specific disruption being handled, and
+// deliberately bypassable (skipCache) so the UI's own "Refresh" affordances
+// still do what they say.
+const aiCache = new Map(); // key -> { value, expiresAt }
+const CACHE_TTL_MS = 90_000;
+
+function getCached(key) {
+  const entry = aiCache.get(key);
+  if (!entry) return null;
+  if (entry.expiresAt <= Date.now()) {
+    aiCache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function setCached(key, value) {
+  aiCache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
 /**
  * Enhanced graph traversal (BFS) computing direct and downstream cascade impacts.
  * Distinguishes hard breaches (buffer collapsed) from soft tight-connection warnings.
@@ -213,7 +252,7 @@ Each object MUST have these exact keys:
 
 Ensure the options are creative, realistic, and tailored to the preference.`;
       
-      const response = await generateWithTimeout({
+      const response = await generateWithRetry({
         model: "gemini-3.6-flash",
         contents: prompt,
         config: {
@@ -338,9 +377,17 @@ Ensure the options are creative, realistic, and tailored to the preference.`;
  * Reconstitutes the itinerary when a recovery plan is selected:
  * Updates disrupted booking, adjusts downstream schedule/buffers, and marks statuses as resolved.
  */
-export function applyRecoveryPlanToItinerary(trip, planId, bookingId, downstreamIds = []) {
+export function applyRecoveryPlanToItinerary(trip, planId, bookingId, downstreamIds = [], fallbackPlan = null) {
   const allAlternates = Object.values(ALTERNATES).flat();
-  const selectedAlt = allAlternates.find((a) => a.id === planId);
+  // AI-generated and dynamically-templated recovery options (built in
+  // generateRecoveryOptions) were never added to the static ALTERNATES
+  // table, so the lookup above misses for them — that used to mean
+  // "apply" silently did nothing. fallbackPlan is the full option object
+  // the frontend already has in memory; use it when the static lookup
+  // misses. It uses `label` where ALTERNATES entries use `title` — normalize.
+  const selectedAlt =
+    allAlternates.find((a) => a.id === planId) ||
+    (fallbackPlan ? { ...fallbackPlan, title: fallbackPlan.title || fallbackPlan.label } : null);
 
   const diffs = [];
   let refundTotal = 0;
@@ -434,7 +481,7 @@ Return ONLY a JSON object with these EXACT keys:
   - "insuranceClaimFiling": object with "claimType", "estimatedClaimable" (string with currency), "status"
 
 Draft realistic and professional communications for the vendors.`;
-      const response = await generateWithTimeout({
+      const response = await generateWithRetry({
         model: "gemini-3.6-flash",
         contents: prompt,
         config: {
@@ -501,7 +548,13 @@ const STATIC_INSIGHTS = [
  * structured fields (not free text) so the frontend can route a card click
  * straight into a destination/category view.
  */
-export async function generateTravelInsights(bookingHistory = []) {
+export async function generateTravelInsights(bookingHistory = [], { skipCache = false } = {}) {
+  const cacheKey = `insights:${JSON.stringify(bookingHistory)}`;
+  if (!skipCache) {
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+  }
+
   if (ai) {
     try {
       const historyLine = bookingHistory.length
@@ -520,13 +573,16 @@ Each object MUST have these exact keys:
 
 If the traveler has bookings, bias roughly half the suggestions toward destinations/categories related to their history (e.g. "since you booked X, consider Y nearby"), and the rest toward fresh discovery.`;
 
-      const response = await generateWithTimeout({
+      const response = await generateWithRetry({
         model: "gemini-3.6-flash",
         contents: prompt,
         config: { responseMimeType: "application/json" },
       });
       const generated = JSON.parse(response.text);
-      if (Array.isArray(generated) && generated.length > 0) return generated;
+      if (Array.isArray(generated) && generated.length > 0) {
+        setCached(cacheKey, generated);
+        return generated;
+      }
     } catch (err) {
       console.error("AI travel insights generation failed:", err);
     }
@@ -546,7 +602,13 @@ const STATIC_TRIP_TIPS = [
  * AI-generated "fun" trip tips for a specific destination — powers the
  * Trip Suggestions tab and the destination bundle "coming soon" fallback.
  */
-export async function generateTripSuggestions(destination) {
+export async function generateTripSuggestions(destination, { skipCache = false } = {}) {
+  const cacheKey = `trip-suggestions:${destination || ""}`;
+  if (!skipCache) {
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+  }
+
   if (ai) {
     try {
       const prompt = `You are a well-traveled, enthusiastic local guide. Generate exactly 4 fun, specific, non-generic travel tips for a trip to "${destination || "a popular destination"}" as a JSON array.
@@ -558,13 +620,16 @@ Each object MUST have these exact keys:
 
 Make it feel like insider knowledge, not a Wikipedia summary.`;
 
-      const response = await generateWithTimeout({
+      const response = await generateWithRetry({
         model: "gemini-3.6-flash",
         contents: prompt,
         config: { responseMimeType: "application/json" },
       });
       const generated = JSON.parse(response.text);
-      if (Array.isArray(generated) && generated.length > 0) return generated;
+      if (Array.isArray(generated) && generated.length > 0) {
+        setCached(cacheKey, generated);
+        return generated;
+      }
     } catch (err) {
       console.error("AI trip suggestions generation failed:", err);
     }
@@ -582,39 +647,42 @@ const DEFAULT_CANCELLATION_POLICY = {
 };
 
 /**
- * Disrupt + recover a single ad-hoc real booking (from the booking platform,
- * not the seeded demo trips). Reuses the same cascade/severity/AI machinery
- * as the demo-trip flow, called with a synthetic single-booking "graph" —
- * computeDownstreamImpact naturally returns no downstream bookings since
- * there's nothing else in the list depending on it.
+ * Disrupt + recover a real booking (or a bundle of them) from the booking
+ * platform, not the seeded demo trips. Reuses the same cascade/severity/AI
+ * machinery as the demo-trip flow. `bookings` is the full group the
+ * disrupted one belongs to (a bundle checkout's sibling items, each already
+ * carrying its own `dependsOn` referencing sibling ids) — for a standalone
+ * booking with no bundle, callers pass a single-element array and
+ * computeDownstreamImpact naturally finds no downstream bookings.
  */
-export async function disruptRealBooking(booking, disruptionType, delayMinutes = 0, preference = "balanced") {
-  const normalized = {
+export async function disruptRealBooking(bookings, disruptedId, disruptionType, delayMinutes = 0, preference = "balanced") {
+  const normalized = bookings.map((booking) => ({
     ...booking,
-    dependsOn: [],
+    dependsOn: Array.isArray(booking.dependsOn) ? booking.dependsOn : [],
     bufferMinutes: booking.bufferMinutes ?? null,
     cancellationPolicy: booking.cancellationPolicy || DEFAULT_CANCELLATION_POLICY[booking.type] || null,
-  };
+  }));
 
-  const cascade = computeDownstreamImpact([normalized], normalized.id, delayMinutes, disruptionType);
-  const severityScore = computeSeverity(disruptionType, 0, 0, cascade.hardFailures.length > 0);
+  const cascade = computeDownstreamImpact(normalized, disruptedId, delayMinutes, disruptionType);
+  const atRiskAmongDownstream = computeAtRiskBookings(cascade.downstream).length;
+  const severityScore = computeSeverity(disruptionType, cascade.downstreamIds.length, atRiskAmongDownstream, cascade.hardFailures.length > 0);
 
-  const recoveryOptions = await generateRecoveryOptions([normalized], normalized.id, [], preference);
+  const recoveryOptions = await generateRecoveryOptions(normalized, disruptedId, cascade.downstreamIds, preference);
 
   const disruptionMeta = {
     id: `dis_real_${Date.now()}`,
-    bookingId: normalized.id,
+    bookingId: disruptedId,
     type: disruptionType,
     delayMinutes: Number(delayMinutes) || 0,
     triggeredAt: new Date().toISOString(),
   };
 
-  const bookingsById = { [normalized.id]: normalized };
+  const bookingsById = Object.fromEntries(normalized.map((b) => [b.id, b]));
   const topPlan = recoveryOptions.find((p) => p.recommended) || recoveryOptions[0];
   const aiBrief = topPlan
     ? await generateAIIncidentBrief(
         disruptionMeta,
-        { directImpact: normalized.id, downstreamImpacts: [] },
+        { directImpact: disruptedId, downstreamImpacts: cascade.downstreamIds },
         topPlan,
         bookingsById,
         "INR"
@@ -624,8 +692,8 @@ export async function disruptRealBooking(booking, disruptionType, delayMinutes =
   return {
     disruption: disruptionMeta,
     impact: {
-      directImpact: normalized.id,
-      downstreamImpacts: [],
+      directImpact: disruptedId,
+      downstreamImpacts: cascade.downstreamIds,
       cascadePaths: cascade.cascadePaths,
       hardFailures: cascade.hardFailures,
       tightWarnings: cascade.tightWarnings,

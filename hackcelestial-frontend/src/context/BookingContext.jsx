@@ -25,7 +25,10 @@ export function BookingProvider({ children }) {
   // don't race on a stale closure of confirmedBookings and clobber each other.
 
   const addBooking = async (booking) => {
-    const newBooking = { ...booking, id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, bookedAt: new Date().toISOString() };
+    // Respect a pre-supplied id (bundle checkout pre-generates ids so it can
+    // wire up dependsOn relationships between sibling bookings before any of
+    // them are actually created) — otherwise generate one as usual.
+    const newBooking = { ...booking, id: booking.id || `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, bookedAt: new Date().toISOString() };
     setConfirmedBookings((prev) => {
       const updated = [newBooking, ...prev];
       localStorage.setItem("recoup_bookings", JSON.stringify(updated));

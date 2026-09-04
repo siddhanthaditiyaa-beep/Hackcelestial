@@ -107,17 +107,19 @@ export function useItineraryEngine() {
       if (!activeDisruption || !impact) return;
       setApplying(true);
       try {
+        const plan = recoveryOptions.find((p) => p.id === planId) ?? null;
         const res = await selectRecovery(
           activeDisruption.id,
           impact.directImpact,
           impact.downstreamImpacts,
           planId,
-          activeTripId
+          activeTripId,
+          plan
         );
         setTrip(res.itinerary);
         setAppliedDiffs(res.diffs || []);
         setFinancialSummary(res.financialSummary || null);
-        setResolvedPlan(recoveryOptions.find((p) => p.id === planId) ?? null);
+        setResolvedPlan(plan);
       } catch (err) {
         console.error("Apply recovery error:", err);
       } finally {

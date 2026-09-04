@@ -60,12 +60,13 @@ export default function ResultCard({
               Reviews
             </button>
           )}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={onBook}
             className={`px-4 py-1.5 rounded-sm text-white text-xs font-bold hover:brightness-105 shadow-sm transition ${tint?.bg || "bg-brand"}`}
           >
             {ctaLabel}
-          </button>
+          </motion.button>
         </div>
       </div>
     </motion.div>

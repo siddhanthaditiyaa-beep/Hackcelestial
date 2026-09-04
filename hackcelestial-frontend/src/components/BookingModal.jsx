@@ -169,10 +169,10 @@ export default function BookingModal({ item, category, onClose }) {
                   <div className="font-display font-semibold text-xl text-ink">₹{totalPrice.toLocaleString()}</div>
                 </div>
 
-                <button onClick={() => setStep(2)}
+                <motion.button whileTap={{ scale: 0.98 }} onClick={() => setStep(2)}
                   className={`w-full py-3.5 rounded-sm ${tint.bg} text-white font-bold text-sm hover:brightness-105 transition shadow-sm`}>
                   Continue to Payment →
-                </button>
+                </motion.button>
               </>
             )}
 
@@ -220,14 +220,14 @@ export default function BookingModal({ item, category, onClose }) {
                   <span className="font-display font-semibold text-xl text-ink">₹{totalPrice.toLocaleString()}</span>
                 </div>
 
-                <button onClick={handleConfirm} disabled={loading}
+                <motion.button whileTap={!loading ? { scale: 0.98 } : {}} onClick={handleConfirm} disabled={loading}
                   className={`w-full py-3.5 rounded-sm ${tint.bg} text-white font-bold text-sm hover:brightness-105 transition shadow-sm disabled:opacity-70 flex items-center justify-center gap-2`}>
                   {loading ? (
                     <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
                       <Clock className="h-4 w-4" />
                     </motion.div>
                   ) : <>Pay ₹{totalPrice.toLocaleString()} Securely</>}
-                </button>
+                </motion.button>
                 <p className="text-center text-xs text-ink-faint">256-bit SSL encrypted · PCI DSS compliant</p>
               </>
             )}

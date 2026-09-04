@@ -14,6 +14,35 @@ function itemLabel(category, item) {
   return item.name;
 }
 
+// Booking category → dependency tier, mirroring the demo trip's own shape
+// (transport first, then lodging, then activities). Items in a later tier
+// depend on the first-booked item of the nearest earlier non-empty tier, so
+// disrupting a bundle's flight can cascade to its hotel/activities the same
+// way the seeded demo trip cascades.
+const CATEGORY_TIER = { flights: 0, trains: 0, hotels: 1, hostels: 1, activities: 2 };
+
+function buildBundlePayload(items) {
+  const bundleId = `bundle_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+  const withTier = items.map(({ category, item }) => ({
+    category,
+    item,
+    tier: CATEGORY_TIER[category] ?? 1,
+    id: `${bundleId}_${category}_${item.id}`,
+  }));
+
+  const firstIdByTier = {};
+  withTier.forEach((entry) => {
+    if (firstIdByTier[entry.tier] === undefined) firstIdByTier[entry.tier] = entry.id;
+  });
+  const tiers = Object.keys(firstIdByTier).map(Number).sort((a, b) => a - b);
+
+  return withTier.map((entry) => {
+    const earlierTier = [...tiers].reverse().find((t) => t < entry.tier);
+    const dependsOn = earlierTier !== undefined ? [firstIdByTier[earlierTier]] : [];
+    return { ...entry, bundleId, dependsOn };
+  });
+}
+
 export default function BundleCheckoutModal({ items, onClose, onDone }) {
   const { addBooking } = useBooking();
   const [step, setStep] = useState(1); // 1=review, 2=success
@@ -24,9 +53,11 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
   const handleConfirm = async () => {
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1400)); // simulate combined payment
+    const bundle = buildBundlePayload(items);
     await Promise.all(
-      items.map(({ category, item }) =>
+      bundle.map(({ id, category, item, bundleId, dependsOn }) =>
         addBooking({
+          id,
           category,
           itemId: item.id,
           itemName: itemLabel(category, item),
@@ -34,6 +65,8 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
           guests: 1,
           totalPrice: parsePrice(item.price),
           img: item.img,
+          bundleId,
+          dependsOn,
         })
       )
     );
@@ -62,7 +95,8 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
               <span className="text-sm font-semibold text-ink-dim flex items-center gap-1.5"><CreditCard className="h-4 w-4" /> Total Payable</span>
               <span className="font-display font-semibold text-xl text-ink">₹{total.toLocaleString()}</span>
             </div>
-            <button
+            <motion.button
+              whileTap={!loading ? { scale: 0.98 } : {}}
               onClick={handleConfirm}
               disabled={loading}
               className="w-full py-3.5 rounded-sm bg-brand text-brand-ink font-bold text-sm hover:brightness-105 transition shadow-sm disabled:opacity-70 flex items-center justify-center gap-2"
@@ -74,7 +108,7 @@ export default function BundleCheckoutModal({ items, onClose, onDone }) {
               ) : (
                 <>Pay ₹{total.toLocaleString()} for Everything</>
               )}
-            </button>
+            </motion.button>
             <p className="text-center text-xs text-ink-faint">256-bit SSL encrypted · PCI DSS compliant</p>
           </div>
         </>

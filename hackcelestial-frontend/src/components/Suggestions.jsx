@@ -4,6 +4,7 @@ import { Lightbulb, Plus, ThumbsUp, Sparkles, RotateCw, MapPin } from "lucide-re
 import { getAITripSuggestions } from "../data/api";
 import { useBooking } from "../context/BookingContext";
 import Autocomplete from "./ui/Autocomplete";
+import Skeleton from "./ui/Skeleton";
 
 const VIBE_TINT = {
   food: "bg-status-risk-dim text-status-risk",
@@ -38,10 +39,10 @@ export default function Suggestions({ destination: destinationProp }) {
   const [aiTips, setAiTips] = useState([]);
   const [loadingTips, setLoadingTips] = useState(true);
 
-  const loadTips = async () => {
+  const loadTips = async (refresh = false) => {
     setLoadingTips(true);
     try {
-      const tips = await getAITripSuggestions(destination);
+      const tips = await getAITripSuggestions(destination, refresh);
       setAiTips(tips);
     } catch {
       setAiTips([]);
@@ -96,7 +97,7 @@ export default function Suggestions({ destination: destinationProp }) {
           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-status-resolved">
             <Sparkles className="h-3.5 w-3.5" /> Recoup AI Tips
           </span>
-          <button onClick={loadTips} disabled={loadingTips} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-faint hover:text-brand transition disabled:opacity-50">
+          <button onClick={() => loadTips(true)} disabled={loadingTips} className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-faint hover:text-brand transition disabled:opacity-50">
             <RotateCw className={`h-3 w-3 ${loadingTips ? "animate-spin" : ""}`} /> Refresh
           </button>
         </div>
@@ -119,10 +120,10 @@ export default function Suggestions({ destination: destinationProp }) {
                   <p className="text-xs text-ink-dim leading-relaxed">{tip.text}</p>
                 </>
               ) : (
-                <div className="animate-pulse space-y-2">
-                  <div className="h-5 w-5 rounded bg-surface-sunk" />
-                  <div className="h-3 w-3/4 rounded bg-surface-sunk" />
-                  <div className="h-3 w-full rounded bg-surface-sunk" />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-5" />
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
                 </div>
               )}
             </motion.div>

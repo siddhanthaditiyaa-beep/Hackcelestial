@@ -11,6 +11,7 @@ router.post("/select-recovery", (req, res) => {
     bookingId,
     downstreamIds = [],
     planId,
+    plan = null,
   } = req.body;
 
   if (!bookingId) {
@@ -20,8 +21,11 @@ router.post("/select-recovery", (req, res) => {
   const existing = getTrip(tripId);
   if (!existing) return res.status(404).json({ error: `Trip '${tripId}' not found` });
 
-  // Apply full recovery reconstitution
-  const result = applyRecovery(tripId, planId, bookingId, downstreamIds);
+  // Apply full recovery reconstitution. `plan` is the full recovery-option
+  // object the frontend already has in memory — used as a fallback when
+  // planId isn't found in the static ALTERNATES table (e.g. an AI-generated
+  // or dynamically-templated plan), so applying it isn't a silent no-op.
+  const result = applyRecovery(tripId, planId, bookingId, downstreamIds, plan);
   if (!result) {
     return res.status(500).json({ error: "Failed to apply recovery plan" });
   }

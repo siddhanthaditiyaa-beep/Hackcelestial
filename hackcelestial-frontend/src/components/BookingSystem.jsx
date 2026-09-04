@@ -13,6 +13,7 @@ import ResultCard from "./ui/ResultCard";
 import DarkPromoBanner from "./ui/DarkPromoBanner";
 import Autocomplete from "./ui/Autocomplete";
 import DestinationPackageView from "./DestinationPackageView";
+import Skeleton from "./ui/Skeleton";
 import { useBooking } from "../context/BookingContext";
 import { CATEGORY_TINT } from "../utils/visuals";
 import { getAITravelInsights } from "../data/api";
@@ -292,10 +293,10 @@ export default function BookingSystem() {
     destinationsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const loadInsights = async () => {
+  const loadInsights = async (refresh = false) => {
     setLoadingInsights(true);
     try {
-      const insights = await getAITravelInsights(confirmedBookings);
+      const insights = await getAITravelInsights(confirmedBookings, refresh);
       setAiInsights(insights);
     } catch {
       setAiInsights([]);
@@ -421,7 +422,7 @@ export default function BookingSystem() {
               <span className="text-[10px] font-bold text-status-resolved border border-status-resolved/20 bg-status-resolved-dim px-2 py-0.5 rounded-full">Recoup AI</span>
             </div>
             <button
-              onClick={loadInsights}
+              onClick={() => loadInsights(true)}
               disabled={loadingInsights}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-faint hover:text-brand transition disabled:opacity-50"
             >
@@ -439,10 +440,10 @@ export default function BookingSystem() {
                     <p className="text-xs text-ink-dim leading-relaxed group-hover:text-ink transition">{s.text}</p>
                   </>
                 ) : (
-                  <div className="animate-pulse space-y-2">
-                    <div className="h-5 w-5 rounded bg-surface-sunk" />
-                    <div className="h-3 w-full rounded bg-surface-sunk" />
-                    <div className="h-3 w-2/3 rounded bg-surface-sunk" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-5 w-5" />
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
                   </div>
                 )}
               </motion.div>
@@ -528,7 +529,19 @@ export default function BookingSystem() {
           </div>
 
           {/* Grid View */}
-          {viewMode === "grid" && (
+          {viewMode === "grid" && filteredDests.length === 0 ? (
+            <div className="flex flex-col items-center justify-center text-center py-16 rounded-md border border-dashed border-border">
+              <Globe className="h-8 w-8 text-ink-faint/40 mb-3" />
+              <p className="text-sm font-semibold text-ink">No destinations match "{searchQuery}"{selectedRegion !== "All" ? ` in ${selectedRegion}` : ""}</p>
+              <p className="text-xs text-ink-faint mt-1 mb-4">Try a different search term or region.</p>
+              <button
+                onClick={() => { setSearchQuery(""); setSelectedRegion("All"); }}
+                className="px-4 py-2 rounded-sm border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : viewMode === "grid" && (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 {displayDests.map((d, i) => (

@@ -192,13 +192,13 @@ export default function Login() {
                 )}
               </AnimatePresence>
 
-              <button type="submit" disabled={loading}
+              <motion.button type="submit" disabled={loading} whileTap={!loading ? { scale: 0.98 } : {}}
                 className="w-full bg-ink text-page font-bold text-sm rounded-sm py-3.5 flex items-center justify-center gap-2 hover:opacity-90 transition disabled:opacity-60 shadow-sm">
                 {loading
                   ? <motion.div animate={{ rotate:360 }} transition={{ duration:1, repeat:Infinity, ease:"linear" }}><Sparkles className="h-4 w-4" /></motion.div>
                   : <>{mode === "login" ? "Sign In" : "Create Account"}<ArrowRight className="h-4 w-4" /></>
                 }
-              </button>
+              </motion.button>
             </form>
 
             {/* Demo credentials */}

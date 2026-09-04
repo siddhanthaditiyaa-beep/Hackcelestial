@@ -60,7 +60,7 @@ export function updateBookingStatuses(tripId, updates) {
   return state;
 }
 
-export function applyRecovery(tripId, planId, bookingId, downstreamIds = []) {
+export function applyRecovery(tripId, planId, bookingId, downstreamIds = [], fallbackPlan = null) {
   const state = trips.get(tripId);
   if (!state) return null;
 
@@ -68,7 +68,8 @@ export function applyRecovery(tripId, planId, bookingId, downstreamIds = []) {
     state,
     planId,
     bookingId,
-    downstreamIds
+    downstreamIds,
+    fallbackPlan
   );
 
   state.bookings = updatedBookings;

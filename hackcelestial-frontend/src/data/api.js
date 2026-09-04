@@ -60,7 +60,8 @@ export async function selectRecovery(
   bookingId,
   downstreamIds,
   planId,
-  tripId = "trip_001"
+  tripId = "trip_001",
+  plan = null
 ) {
   return request(`/select-recovery`, {
     method: "POST",
@@ -70,6 +71,7 @@ export async function selectRecovery(
       bookingId,
       downstreamIds,
       planId,
+      plan,
     }),
   });
 }
@@ -93,6 +95,7 @@ export async function resetItinerary(tripId = "trip_001") {
 // Real-booking disruption loop + AI content (feature push)
 // ---------------------------------------------------------------------------
 
+// Standalone booking (no bundle siblings).
 export async function disruptRealBooking(booking, disruptionType, delayMinutes = 0, travelerPreference = "balanced") {
   return request(`/booking-disrupt`, {
     method: "POST",
@@ -100,17 +103,26 @@ export async function disruptRealBooking(booking, disruptionType, delayMinutes =
   });
 }
 
-export async function getAITravelInsights(bookingHistory = []) {
-  return request(`/ai/insights`, {
+// Bundle: full sibling group + which one is being disrupted, so the cascade
+// reflects the bundle's real dependsOn chain.
+export async function disruptBundleBooking(bookings, disruptedBookingId, disruptionType, delayMinutes = 0, travelerPreference = "balanced") {
+  return request(`/booking-disrupt`, {
     method: "POST",
-    body: JSON.stringify({ bookingHistory }),
+    body: JSON.stringify({ bookings, disruptedBookingId, disruptionType, delayMinutes: Number(delayMinutes) || 0, travelerPreference }),
   });
 }
 
-export async function getAITripSuggestions(destination) {
+export async function getAITravelInsights(bookingHistory = [], refresh = false) {
+  return request(`/ai/insights`, {
+    method: "POST",
+    body: JSON.stringify({ bookingHistory, refresh }),
+  });
+}
+
+export async function getAITripSuggestions(destination, refresh = false) {
   return request(`/ai/trip-suggestions`, {
     method: "POST",
-    body: JSON.stringify({ destination }),
+    body: JSON.stringify({ destination, refresh }),
   });
 }
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Plane, Train, Building, Tent, Compass, Check, Star, MapPin, Sparkles, ShoppingBag } from "lucide-react";
 import Modal from "./ui/Modal";
+import Skeleton from "./ui/Skeleton";
 import BookingModal from "./BookingModal";
 import BundleCheckoutModal from "./BundleCheckoutModal";
 import { RESULTS, TABS } from "../data/inventory";
@@ -149,7 +150,7 @@ export default function DestinationPackageView({ dest, onClose }) {
               return (
                 <div
                   key={item.id}
-                  className={`flex items-center gap-4 rounded-md border p-3 transition-all ${
+                  className={`flex flex-wrap items-center gap-3 rounded-md border p-3 transition-all ${
                     isSelected ? "border-brand bg-brand-dim/40" : "border-border bg-surface hover:border-border-strong"
                   }`}
                 >
@@ -161,24 +162,24 @@ export default function DestinationPackageView({ dest, onClose }) {
                       {meta.rating && <span className="inline-flex items-center gap-0.5 shrink-0"><Star className="h-3 w-3 fill-status-risk text-status-risk" />{meta.rating}</span>}
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
+                  <div className="flex items-center justify-between gap-3 w-full sm:w-auto sm:ml-auto">
                     <div className="font-semibold text-sm text-ink">{meta.price}</div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => setCustomizeItem({ item, category: activeTab })}
-                      className="px-3 py-2 rounded-sm border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition"
-                    >
-                      Customize
-                    </button>
-                    <button
-                      onClick={() => toggleSelect(activeTab, item)}
-                      className={`h-9 w-9 rounded-sm flex items-center justify-center transition ${
-                        isSelected ? "bg-brand text-brand-ink" : "border border-border text-ink-faint hover:border-brand/50"
-                      }`}
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => setCustomizeItem({ item, category: activeTab })}
+                        className="px-3 py-2 rounded-sm border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition"
+                      >
+                        Customize
+                      </button>
+                      <button
+                        onClick={() => toggleSelect(activeTab, item)}
+                        className={`h-9 w-9 rounded-sm flex items-center justify-center transition shrink-0 ${
+                          isSelected ? "bg-brand text-brand-ink" : "border border-border text-ink-faint hover:border-brand/50"
+                        }`}
+                      >
+                        <Check className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -220,7 +221,7 @@ export default function DestinationPackageView({ dest, onClose }) {
                     <p className="text-xs text-ink-dim leading-relaxed">{tip.text}</p>
                   </>
                 ) : (
-                  <div className="animate-pulse h-12 rounded bg-surface-sunk" />
+                  <Skeleton className="h-12" />
                 )}
               </motion.div>
             ))}

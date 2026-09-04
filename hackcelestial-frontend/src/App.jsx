@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import Header from "./components/Header";
 import ItineraryRail from "./components/ItineraryRail";
 import TopologyGraphView from "./components/TopologyGraphView";
@@ -137,38 +138,39 @@ export default function App() {
       />
 
       {/* Global Navigation Tabs */}
-      <div className="max-w-[1240px] mx-auto px-4 md:px-8 -mt-10 mb-8 relative z-10">
-        <div className="flex items-center gap-2 bg-surface p-1.5 rounded-md border border-border inline-flex shadow-md">
+      <div className="max-w-[1240px] mx-auto px-4 md:px-8 -mt-10 mb-8 relative z-10 overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-2 bg-surface p-1.5 rounded-md border border-border inline-flex shadow-md">
           <button
             onClick={() => setMainTab("dashboard")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-bold transition-all ${mainTab === "dashboard" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-5 py-2 rounded-sm text-xs sm:text-sm font-bold transition-all whitespace-nowrap shrink-0 ${mainTab === "dashboard" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
           >
-            <Home className="h-4 w-4" /> Itinerary Dashboard
+            <Home className="h-4 w-4 shrink-0" /> <span className="sm:hidden">Dashboard</span><span className="hidden sm:inline">Itinerary Dashboard</span>
           </button>
           <button
             onClick={() => setMainTab("booking")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-bold transition-all ${mainTab === "booking" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-5 py-2 rounded-sm text-xs sm:text-sm font-bold transition-all whitespace-nowrap shrink-0 ${mainTab === "booking" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
           >
-            <Compass className="h-4 w-4" /> Explore & Book
+            <Compass className="h-4 w-4 shrink-0" /> <span className="sm:hidden">Book</span><span className="hidden sm:inline">Explore & Book</span>
           </button>
           <button
             onClick={() => setMainTab("suggestions")}
-            className={`flex items-center gap-2 px-5 py-2 rounded-sm text-sm font-bold transition-all ${mainTab === "suggestions" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-5 py-2 rounded-sm text-xs sm:text-sm font-bold transition-all whitespace-nowrap shrink-0 ${mainTab === "suggestions" ? "bg-ink text-page shadow-sm" : "text-ink-dim hover:text-ink hover:bg-surface-sunk"}`}
           >
-            <MessageSquarePlus className="h-4 w-4" /> Trip Suggestions
+            <MessageSquarePlus className="h-4 w-4 shrink-0" /> <span className="sm:hidden">Suggestions</span><span className="hidden sm:inline">Trip Suggestions</span>
           </button>
         </div>
       </div>
 
       <main className="max-w-[1240px] mx-auto px-4 md:px-8 pb-12">
+        <motion.div key={mainTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
         {mainTab === "booking" && <BookingSystem />}
-        
+
         {mainTab === "suggestions" && <Suggestions />}
-        
+
         {mainTab === "dashboard" && (
         <div className="bg-page rounded-lg shadow-md px-4 md:px-8 py-4 grid lg:grid-cols-[1fr_420px] gap-8">
           {/* Main Visualizer Area */}
-          <section className="pt-4 pb-6">
+          <section className="pt-4 pb-6 min-w-0">
             <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <h2 className="font-display text-xl font-bold text-ink">
@@ -227,7 +229,7 @@ export default function App() {
           </section>
 
           {/* Sidebar: Disruption Console / Recovery List */}
-          <aside className="lg:sticky lg:top-6 lg:self-start space-y-6 pt-4 pb-6">
+          <aside className="lg:sticky lg:top-6 lg:self-start space-y-6 pt-4 pb-6 min-w-0">
             {!activeDisruption ? (
               <DisruptionConsole
                 bookings={trip.bookings}
@@ -275,6 +277,7 @@ export default function App() {
           </aside>
         </div>
         )}
+        </motion.div>
       </main>
 
       {/* AI Copilot & Concierge Modal */}

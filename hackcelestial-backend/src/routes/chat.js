@@ -7,20 +7,21 @@ const router = Router();
 const MAX_TURNS = 40; // guards against a runaway/abusive conversation payload
 
 // POST /api/chat
-// Body: { contents: [{role: "user"|"model", parts: [...]}, ...] } — the full
-// conversation so far, in Gemini's own Content format. The frontend owns and
-// replays this history; this endpoint is stateless.
+// Body: { messages: [{role: "user"|"assistant"|"tool", content, tool_calls?,
+// tool_call_id?}, ...] } — the full conversation so far, in OpenAI chat
+// message format. The frontend owns and replays this history; this endpoint
+// is stateless.
 router.post("/chat", throttle({ max: 20 }), async (req, res) => {
   try {
-    const { contents } = req.body || {};
-    if (!Array.isArray(contents) || contents.length === 0) {
-      return res.status(400).json({ error: "contents must be a non-empty array" });
+    const { messages } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: "messages must be a non-empty array" });
     }
-    if (contents.length > MAX_TURNS) {
+    if (messages.length > MAX_TURNS) {
       return res.status(400).json({ error: "Conversation too long for this endpoint" });
     }
 
-    const result = await runChatTurn(contents);
+    const result = await runChatTurn(messages);
     res.json(result);
   } catch (err) {
     console.error("chat error:", err);

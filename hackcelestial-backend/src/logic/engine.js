@@ -1,17 +1,23 @@
 import { ALTERNATES, DISRUPTION_SEVERITY_BASE } from "../data/seed.js";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import "dotenv/config";
 
-const apiKey = process.env.GEMINI_API_KEY;
-export const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// Groq's API is OpenAI-compatible, so the same SDK talks to it via baseURL —
+// swapped in from Gemini because Gemini's free tier caps out at 20
+// requests/day on this model, which every AI feature in the app was hitting
+// constantly. Groq's free tier is far more generous and supports the same
+// tool-calling the chat agent needs.
+const apiKey = process.env.GROQ_API_KEY;
+export const ai = apiKey ? new OpenAI({ apiKey, baseURL: "https://api.groq.com/openai/v1" }) : null;
+export const MODEL = "openai/gpt-oss-120b";
 
-// The Gemini SDK call has no built-in timeout — a slow/hanging response would
-// otherwise leave a request (and the UI waiting on it) hanging indefinitely.
-// Every ai.models.generateContent call in this file goes through this.
+// No SDK-level timeout — a slow/hanging response would otherwise leave a
+// request (and the UI waiting on it) hanging indefinitely. Every chat
+// completion call in this file goes through this.
 function generateWithTimeout(params, timeoutMs = 12_000) {
   return Promise.race([
-    ai.models.generateContent(params),
-    new Promise((_, reject) => setTimeout(() => reject(new Error("Gemini request timed out")), timeoutMs)),
+    ai.chat.completions.create(params),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("AI request timed out")), timeoutMs)),
   ]);
 }
 
@@ -28,6 +34,19 @@ export async function generateWithRetry(params, { timeoutMs = 12_000, retryDelay
     await new Promise((r) => setTimeout(r, retryDelayMs));
     return generateWithTimeout(params, timeoutMs);
   }
+}
+
+// Shared helper for the four "generate a JSON blob" call sites below. Groq's
+// json_object mode (like OpenAI's) guarantees valid JSON but expects an
+// object at the root, not a bare array — so prompts that want an array wrap
+// it under a named key (e.g. {"options": [...]}) and callers destructure it.
+async function generateJSON(prompt) {
+  const response = await generateWithRetry({
+    model: MODEL,
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+  return JSON.parse(response.choices[0].message.content);
 }
 
 // Tiny in-memory TTL cache for the two "content" AI calls (insights, trip
@@ -236,8 +255,8 @@ Disrupted Booking: ${JSON.stringify(disruptedBooking)}
 Downstream Bookings count: ${downstreamIds.length}
 Traveler Preference: ${preference}
 
-Generate exactly 3 diverse alternative recovery options as a JSON array.
-Each object MUST have these exact keys:
+Return a JSON object of the exact shape {"options": [...]} containing exactly 3 diverse alternative recovery options.
+Each option object MUST have these exact keys:
 - "id": string (unique ID)
 - "title": string (short descriptive title)
 - "strategy": string (budget, speed, comfort, or balanced)
@@ -251,15 +270,8 @@ Each object MUST have these exact keys:
 - "mitigations": array of 1-3 short strings detailing the fix
 
 Ensure the options are creative, realistic, and tailored to the preference.`;
-      
-      const response = await generateWithRetry({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        },
-      });
-      const generated = JSON.parse(response.text);
+
+      const { options: generated } = await generateJSON(prompt);
       if (Array.isArray(generated) && generated.length > 0) {
         alternatesList = generated;
       }
@@ -481,14 +493,7 @@ Return ONLY a JSON object with these EXACT keys:
   - "insuranceClaimFiling": object with "claimType", "estimatedClaimable" (string with currency), "status"
 
 Draft realistic and professional communications for the vendors.`;
-      const response = await generateWithRetry({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-        },
-      });
-      return JSON.parse(response.text);
+      return await generateJSON(prompt);
     } catch (err) {
       console.error("AI brief generation failed:", err);
     }
@@ -564,8 +569,8 @@ export async function generateTravelInsights(bookingHistory = [], { skipCache = 
       const prompt = `You are Recoup's AI travel insights generator for a booking platform (flights, trains, hotels, hostels, activities).
 Traveler's recent bookings: ${historyLine}
 
-Generate exactly 7 diverse, fresh, specific travel insight cards as a JSON array. Vary destinations and categories each time — do not just repeat generic tips.
-Each object MUST have these exact keys:
+Return a JSON object of the exact shape {"insights": [...]} containing exactly 7 diverse, fresh, specific travel insight cards. Vary destinations and categories each time — do not just repeat generic tips.
+Each insight object MUST have these exact keys:
 - "icon": string (single relevant emoji)
 - "text": string (one punchy sentence, under 110 characters, mention a concrete detail like a price, date window, or % saving)
 - "category": string (one of: flights, trains, hotels, hostels, activities)
@@ -573,12 +578,7 @@ Each object MUST have these exact keys:
 
 If the traveler has bookings, bias roughly half the suggestions toward destinations/categories related to their history (e.g. "since you booked X, consider Y nearby"), and the rest toward fresh discovery.`;
 
-      const response = await generateWithRetry({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json" },
-      });
-      const generated = JSON.parse(response.text);
+      const { insights: generated } = await generateJSON(prompt);
       if (Array.isArray(generated) && generated.length > 0) {
         setCached(cacheKey, generated);
         return generated;
@@ -611,8 +611,8 @@ export async function generateTripSuggestions(destination, { skipCache = false }
 
   if (ai) {
     try {
-      const prompt = `You are a well-traveled, enthusiastic local guide. Generate exactly 4 fun, specific, non-generic travel tips for a trip to "${destination || "a popular destination"}" as a JSON array.
-Each object MUST have these exact keys:
+      const prompt = `You are a well-traveled, enthusiastic local guide. Return a JSON object of the exact shape {"tips": [...]} containing exactly 4 fun, specific, non-generic travel tips for a trip to "${destination || "a popular destination"}".
+Each tip object MUST have these exact keys:
 - "emoji": string (single relevant emoji)
 - "title": string (short punchy title, under 40 characters)
 - "text": string (one or two sentences, concrete and specific to the destination, under 160 characters)
@@ -620,12 +620,7 @@ Each object MUST have these exact keys:
 
 Make it feel like insider knowledge, not a Wikipedia summary.`;
 
-      const response = await generateWithRetry({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json" },
-      });
-      const generated = JSON.parse(response.text);
+      const { tips: generated } = await generateJSON(prompt);
       if (Array.isArray(generated) && generated.length > 0) {
         setCached(cacheKey, generated);
         return generated;

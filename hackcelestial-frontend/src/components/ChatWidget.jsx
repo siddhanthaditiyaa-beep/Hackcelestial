@@ -34,7 +34,7 @@ export default function ChatWidget() {
   const [sending, setSending] = useState(false);
   const [statusText, setStatusText] = useState(null);
 
-  const contentsRef = useRef([]); // full Gemini conversation history
+  const historyRef = useRef([]); // full OpenAI-style chat message history
   const planStashRef = useRef(new Map()); // bookingId -> recoveryOptions, from simulate_disruption
   const scrollRef = useRef(null);
 
@@ -49,7 +49,7 @@ export default function ChatWidget() {
   };
 
   const runTurn = async (userText) => {
-    contentsRef.current = [...contentsRef.current, { role: "user", parts: [{ text: userText }] }];
+    historyRef.current = [...historyRef.current, { role: "user", content: userText }];
     pushMessage("user", userText);
     setSending(true);
 
@@ -61,19 +61,18 @@ export default function ChatWidget() {
 
         let res;
         try {
-          res = await sendChatTurn(contentsRef.current);
+          res = await sendChatTurn(historyRef.current);
         } catch (err) {
           pushMessage("assistant", err.message || "Sorry, I'm having trouble connecting right now. Please try again in a moment.");
           return;
         }
 
-        contentsRef.current = [...contentsRef.current, res.modelTurn];
+        historyRef.current = [...historyRef.current, res.assistantMessage];
 
         if (res.text) pushMessage("assistant", res.text);
 
         if (!res.calls || res.calls.length === 0) return;
 
-        const responseParts = [];
         for (const call of res.calls) {
           setStatusText(`${TOOL_LABELS[call.name] || "Working"}…`);
           let result;
@@ -83,9 +82,11 @@ export default function ChatWidget() {
           } catch (err) {
             result = { success: false, error: err.message || "Tool execution failed" };
           }
-          responseParts.push({ functionResponse: { id: call.id, name: call.name, response: result } });
+          // OpenAI-style tool calling requires one message per call, each
+          // tagged with the matching tool_call_id (unlike Gemini, which
+          // bundles all function responses into one turn's parts array).
+          historyRef.current = [...historyRef.current, { role: "tool", tool_call_id: call.id, content: JSON.stringify(result) }];
         }
-        contentsRef.current = [...contentsRef.current, { role: "user", parts: responseParts }];
       }
 
       pushMessage("assistant", "That's taking longer than expected — mind trying that again?");

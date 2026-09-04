@@ -133,11 +133,12 @@ export async function checkBookingRisk({ type, location, vendor }) {
   });
 }
 
-// contents: the full conversation so far as Gemini Content objects
-// ({role: "user"|"model", parts: [...]}) — see ChatWidget.jsx.
-export async function sendChatTurn(contents) {
+// messages: the full conversation so far as OpenAI-style chat messages
+// ({role: "user"|"assistant"|"tool", content, tool_calls?, tool_call_id?})
+// — see ChatWidget.jsx.
+export async function sendChatTurn(messages) {
   return request(`/chat`, {
     method: "POST",
-    body: JSON.stringify({ contents }),
+    body: JSON.stringify({ messages }),
   });
 }

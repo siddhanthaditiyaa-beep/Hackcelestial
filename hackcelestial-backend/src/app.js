@@ -6,6 +6,7 @@ import recoveryRoutes from "./routes/recovery.js";
 import bookingDisruptRoutes from "./routes/bookingDisrupt.js";
 import aiInsightsRoutes from "./routes/aiInsights.js";
 import riskCheckRoutes from "./routes/riskCheck.js";
+import chatRoutes from "./routes/chat.js";
 import { getAllTrips } from "./data/store.js";
 
 export function createApp() {
@@ -23,6 +24,7 @@ export function createApp() {
   app.use("/api", bookingDisruptRoutes); // /api/booking-disrupt
   app.use("/api", aiInsightsRoutes);     // /api/ai/insights, /api/ai/trip-suggestions
   app.use("/api", riskCheckRoutes);      // /api/risk-check
+  app.use("/api", chatRoutes);           // /api/chat
 
   app.use((_req, res) => res.status(404).json({ error: "Not found" }));
 

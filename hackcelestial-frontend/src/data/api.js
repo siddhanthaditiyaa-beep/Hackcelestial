@@ -132,3 +132,12 @@ export async function checkBookingRisk({ type, location, vendor }) {
     body: JSON.stringify({ type, location, vendor }),
   });
 }
+
+// contents: the full conversation so far as Gemini Content objects
+// ({role: "user"|"model", parts: [...]}) — see ChatWidget.jsx.
+export async function sendChatTurn(contents) {
+  return request(`/chat`, {
+    method: "POST",
+    body: JSON.stringify({ contents }),
+  });
+}

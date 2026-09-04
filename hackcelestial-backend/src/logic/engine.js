@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import "dotenv/config";
 
 const apiKey = process.env.GEMINI_API_KEY;
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+export const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 // The Gemini SDK call has no built-in timeout — a slow/hanging response would
 // otherwise leave a request (and the UI waiting on it) hanging indefinitely.
@@ -18,7 +18,7 @@ function generateWithTimeout(params, timeoutMs = 12_000) {
 // One retry with a short delay on a transient error (rate limit / overload /
 // our own timeout) before the caller falls through to its static fallback.
 // Not a queue or real rate limiter — just enough to smooth over a blip.
-async function generateWithRetry(params, { timeoutMs = 12_000, retryDelayMs = 800 } = {}) {
+export async function generateWithRetry(params, { timeoutMs = 12_000, retryDelayMs = 800 } = {}) {
   try {
     return await generateWithTimeout(params, timeoutMs);
   } catch (err) {

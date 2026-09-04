@@ -12,6 +12,7 @@ import Login from "./components/Login";
 import BookingSystem from "./components/BookingSystem";
 import Suggestions from "./components/Suggestions";
 import MyBookingsModal from "./components/MyBookingsModal";
+import ChatWidget from "./components/ChatWidget";
 import { useItineraryEngine } from "./hooks/useItineraryEngine";
 import { useAuth } from "./context/AuthContext";
 import { Loader2, Home, Compass, MessageSquarePlus, ArrowLeft } from "lucide-react";
@@ -291,6 +292,8 @@ export default function App() {
       />
 
       {myBookingsOpen && <MyBookingsModal onClose={() => setMyBookingsOpen(false)} />}
+
+      <ChatWidget />
     </div>
   );
 }

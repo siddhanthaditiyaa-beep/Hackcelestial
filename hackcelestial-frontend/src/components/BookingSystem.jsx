@@ -55,7 +55,6 @@ const ALL_DESTINATIONS = [
   { id:"e1",  name:"Tokyo",          country:"Japan",       region:"East Asia",     lat:35.6762, lng:139.6503, img:"https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80", tag:"⛩ Culture",  temp:"22°C", price:"From ₹42,000", popular:true },
   { id:"e2",  name:"Kyoto",          country:"Japan",       region:"East Asia",     lat:35.0116, lng:135.7681, img:"https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&q=80", tag:"🌸 Temples",  temp:"20°C", price:"From ₹38,000" },
   { id:"e3",  name:"Seoul",          country:"South Korea", region:"East Asia",     lat:37.5665, lng:126.9780, img:"https://images.unsplash.com/photo-1601621915196-2621bfb0cd6e?w=600&q=80", tag:"🎮 K-Culture",temp:"18°C", price:"From ₹34,000", popular:true },
-  { id:"e4",  name:"Bali",           country:"Indonesia",   region:"East Asia",     lat:-8.3405, lng:115.0920, img:"https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600&q=80", tag:"🌺 Island",   temp:"28°C", price:"From ₹18,500" },
   { id:"e5",  name:"Shanghai",       country:"China",       region:"East Asia",     lat:31.2304, lng:121.4737, img:"https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=600&q=80", tag:"🌆 Skyline",  temp:"20°C", price:"From ₹30,000" },
 
   // Middle East

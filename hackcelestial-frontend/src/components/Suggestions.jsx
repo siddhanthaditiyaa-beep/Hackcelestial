@@ -20,9 +20,9 @@ const VIBE_TINT = {
 // Shown only when a destination has no real community suggestions yet —
 // never written anywhere, purely a friendly empty-state.
 const SEED_SUGGESTIONS = [
-  { id: "seed_1", text: "Try the street food at the night market, it's amazing and cheap!", author: "TravelPro99", upvotes: 12 },
-  { id: "seed_2", text: "Book your hotel near the central station to save time on commuting.", author: "ExplorerAditi", upvotes: 8 },
-  { id: "seed_3", text: "Don't forget to pack a universal adapter.", author: "NomadSam", upvotes: 3 },
+  { id: "seed_1", text: "Try the street food at the night market, it's amazing and cheap!", author: "Yuvraj Yadav", upvotes: 12 },
+  { id: "seed_2", text: "Book your hotel near the central station to save time on commuting.", author: "Sreejith Nair", upvotes: 8 },
+  { id: "seed_3", text: "Don't forget to pack a universal adapter.", author: "Karthikeya Shailesh Kumar", upvotes: 3 },
 ];
 
 const REFRESH_MIN_MS = 120_000;

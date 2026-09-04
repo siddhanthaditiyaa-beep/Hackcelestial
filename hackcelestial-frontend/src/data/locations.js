@@ -53,7 +53,12 @@ const EXTRA_CITIES = [
 // Exposed for matching flight routes (BOM/DPS/etc.) against a destination name.
 export const AIRPORT_CITY = Object.fromEntries(AIRPORTS.map((a) => [a.code, a.city]));
 
-const seen = new Set();
+// Airport city names are seeded into `seen` first so a plain-city entry
+// never duplicates one already covered by an airport (e.g. "Mumbai" was
+// appearing twice — once as the BOM airport, once as a bare destination —
+// since the old dedupe only checked DESTINATIONS/EXTRA_CITIES against each
+// other, never against AIRPORTS).
+const seen = new Set(AIRPORTS.map((a) => a.city.toLowerCase()));
 export const LOCATIONS = [
   ...AIRPORTS.map((a) => ({ id: `air_${a.code}`, label: a.city, sublabel: `${a.code} · ${a.country}`, code: a.code })),
   ...[...DESTINATIONS, ...EXTRA_CITIES].filter((d) => {

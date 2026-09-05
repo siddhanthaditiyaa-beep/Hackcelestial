@@ -16,6 +16,7 @@
   --color-ink-faint: var(--ink-faint);
 
   --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
   --color-brand-dim: var(--brand-dim);
   --color-brand-ink: var(--brand-ink);
 
@@ -48,9 +49,11 @@
   --radius-sm: 0.625rem;
   --radius-md: 1rem;
   --radius-lg: 1.5rem;
+  --radius-xl: 1.85rem;
 
   --shadow-sm: 0 1px 2px rgba(28, 26, 23, 0.06), 0 1px 1px rgba(28, 26, 23, 0.04);
   --shadow-md: 0 12px 28px -12px rgba(28, 26, 23, 0.18), 0 4px 10px -6px rgba(28, 26, 23, 0.1);
+  --shadow-lift: 0 24px 48px -18px rgba(28, 26, 23, 0.28), 0 8px 16px -8px rgba(28, 26, 23, 0.14);
 }
 
 :root {
@@ -68,6 +71,7 @@
 
   /* Brand — brass/gold, the single signature accent */
   --brand: #a9791f;
+  --brand-2: #d4a53f;
   --brand-dim: rgba(169, 121, 31, 0.14);
   --brand-ink: #ffffff;
 
@@ -106,6 +110,7 @@
   --ink-faint: #8a8377;
 
   --brand: #e8b44c;
+  --brand-2: #f6d488;
   --brand-dim: rgba(232, 180, 76, 0.16);
   --brand-ink: #1c1a17;
 
@@ -148,6 +153,33 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow: var(--shadow-md);
+}
+
+/* Gradient CTA — the single primary-action treatment used across the app.
+   A soft two-tone brand gradient with a diagonal light sweep on hover, so
+   every "Book"/"Search"/"Pay" button reads as one consistent, premium action. */
+.btn-shine {
+  position: relative;
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-2) 100%);
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-shine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 48%, transparent 66%);
+  transform: translateX(-120%);
+  transition: transform 0.65s ease;
+  z-index: 1;
+}
+.btn-shine:hover::before {
+  transform: translateX(120%);
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3%, -4%) scale(1.08); }
 }
 
 ::selection {

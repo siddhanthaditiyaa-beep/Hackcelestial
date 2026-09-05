@@ -404,9 +404,17 @@ export default function BookingSystem() {
           <div className="flex items-center gap-1 bg-white/8 border border-white/12 p-1 rounded-md">
             {TABS.map(tab => {
               const Icon = tab.icon;
+              const active = activeTab === tab.id;
               return (
                 <button key={tab.id} onClick={() => { setActiveTab(tab.id); setSelectedItemForReview(null); }}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-sm text-xs font-bold whitespace-nowrap transition-all ${activeTab === tab.id ? "bg-white text-slate-900 shadow-sm" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
+                  className={`relative flex items-center gap-1.5 px-4 py-2 rounded-sm text-xs font-bold whitespace-nowrap transition-colors ${active ? "text-slate-900" : "text-white/60 hover:text-white hover:bg-white/10"}`}>
+                  {active && (
+                    <motion.span
+                      layoutId="activeBookingTab"
+                      className="absolute inset-0 bg-white rounded-sm shadow-sm -z-10"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
                   <Icon className="h-3.5 w-3.5" />{tab.label}
                 </button>
               );
@@ -432,9 +440,14 @@ export default function BookingSystem() {
                 {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} {n===1?"Person":"People"}</option>)}
               </select>
             </div>
-            <button onClick={handleSearch} className="px-6 py-3 rounded-sm bg-brand text-brand-ink font-bold text-sm hover:brightness-105 shadow-sm flex items-center gap-2 justify-center whitespace-nowrap">
-              <Search className="h-4 w-4" /> Search
-            </button>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleSearch}
+              className="btn-shine px-6 py-3 rounded-sm text-brand-ink font-bold text-sm shadow-sm hover:shadow-md transition-shadow flex items-center gap-2 justify-center whitespace-nowrap"
+            >
+              <span className="relative z-[2] flex items-center gap-2"><Search className="h-4 w-4" /> Search</span>
+            </motion.button>
           </div>
         </motion.div>
 
@@ -454,7 +467,7 @@ export default function BookingSystem() {
         <div>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-sm bg-brand flex items-center justify-center">
+              <div className="h-8 w-8 rounded-sm flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, var(--color-brand), var(--color-brand-2))" }}>
                 <Sparkles className="h-4 w-4 text-brand-ink" />
               </div>
               <h2 className="font-display font-medium text-lg text-ink">AI Travel Insights</h2>
@@ -470,12 +483,14 @@ export default function BookingSystem() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {(loadingInsights ? Array.from({ length: 8 }) : aiInsights).map((s, i) => (
-              <motion.div key={s?.text || i} initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.06 }}
+              <motion.div key={s?.text || i} initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }} whileHover={{ y: -3 }}
+                transition={{ delay: i*0.06, duration: 0.2 }}
                 onClick={() => s && handleInsightClick(s)}
-                className="bg-surface rounded-md border border-border p-4 shadow-sm hover:border-brand/30 hover:shadow-md transition-all cursor-pointer group">
+                className="relative bg-surface rounded-md border border-border p-4 pl-5 shadow-sm hover:border-brand/40 hover:shadow-md transition-[box-shadow,border-color] cursor-pointer group overflow-hidden">
+                <span className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-brand to-brand-2 scale-y-0 group-hover:scale-y-100 origin-top transition-transform duration-300" />
                 {s ? (
                   <>
-                    <div className="text-xl mb-2">{s.icon}</div>
+                    <div className="text-xl mb-2 group-hover:scale-110 transition-transform duration-300 inline-block">{s.icon}</div>
                     <p className="text-xs text-ink-dim leading-relaxed group-hover:text-ink transition">{s.text}</p>
                   </>
                 ) : (
@@ -565,12 +580,22 @@ export default function BookingSystem() {
 
           {/* Region Filter Pills */}
           <div className="flex items-center gap-2 flex-wrap mb-5">
-            {REGIONS.map(r => (
-              <button key={r} onClick={() => setSelectedRegion(r)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${selectedRegion === r ? "bg-ink text-page border-ink shadow-sm" : "bg-surface border-border text-ink-dim hover:text-ink hover:border-border-strong"}`}>
-                {r}
-              </button>
-            ))}
+            {REGIONS.map(r => {
+              const active = selectedRegion === r;
+              return (
+                <button key={r} onClick={() => setSelectedRegion(r)}
+                  className={`relative px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${active ? "text-page border-ink" : "bg-surface border-border text-ink-dim hover:text-ink hover:border-border-strong"}`}>
+                  {active && (
+                    <motion.span
+                      layoutId="activeRegionPill"
+                      className="absolute inset-0 bg-ink rounded-full shadow-sm -z-10"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  {r}
+                </button>
+              );
+            })}
             <span className="text-xs text-ink-faint ml-1">{filteredDests.length} shown</span>
           </div>
 
@@ -591,17 +616,27 @@ export default function BookingSystem() {
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 {displayDests.map((d, i) => (
-                  <motion.div key={d.id} initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay: Math.min(i*0.04, 0.5) }}
-                    className="group relative rounded-md overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                  <motion.div key={d.id} initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} whileHover={{ y: -5 }}
+                    transition={{ delay: Math.min(i*0.04, 0.5), duration: 0.25 }}
+                    className="group relative rounded-lg overflow-hidden cursor-pointer shadow-sm hover:shadow-lift transition-shadow duration-300"
                     style={{ aspectRatio:"3/4" }} onClick={() => handleDestClick(d)}>
-                    <img src={d.img} alt={d.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={d.img} alt={d.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ring-1 ring-inset ring-brand/40 rounded-lg pointer-events-none" />
                     <button onClick={e => { e.stopPropagation(); toggleSaved(d.id); }}
-                      className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/30 backdrop-blur flex items-center justify-center hover:bg-black/50 transition">
-                      <Heart className={`h-3.5 w-3.5 ${savedDestinations.includes(d.id) ? "fill-status-disrupted text-status-disrupted" : "text-white"}`} />
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/30 backdrop-blur flex items-center justify-center hover:bg-black/50 hover:scale-110 transition-all">
+                      <Heart className={`h-3.5 w-3.5 transition-colors ${savedDestinations.includes(d.id) ? "fill-status-disrupted text-status-disrupted" : "text-white"}`} />
                     </button>
-                    {d.popular && <div className="absolute top-2 left-2 text-[9px] font-bold bg-brand text-brand-ink px-1.5 py-0.5 rounded-full">🔥 Popular</div>}
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                    {d.popular && (
+                      <div className="absolute top-2 left-2 flex items-center gap-1 text-[9px] font-bold text-brand-ink px-1.5 py-0.5 rounded-full shadow-sm" style={{ background: "linear-gradient(135deg, var(--color-brand), var(--color-brand-2))" }}>
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-ink/60 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand-ink/90" />
+                        </span>
+                        Popular
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-0.5 group-hover:translate-y-0 transition-transform duration-300">
                       <div className="text-[9px] font-semibold text-white/70 mb-0.5">{d.tag}</div>
                       <div className="text-sm font-bold text-white leading-tight">{d.name}</div>
                       <div className="text-[9px] text-white/60">{d.country} · {d.temp}</div>
@@ -612,10 +647,10 @@ export default function BookingSystem() {
               </div>
               {filteredDests.length > 12 && (
                 <div className="text-center mt-6">
-                  <button onClick={() => setShowAllDests(!showAllDests)}
-                    className="px-8 py-3 rounded-md border-2 border-border hover:border-ink text-ink font-semibold text-sm transition-all hover:bg-surface-sunk">
+                  <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => setShowAllDests(!showAllDests)}
+                    className="px-8 py-3 rounded-full border-2 border-border hover:border-brand text-ink font-semibold text-sm transition-colors hover:bg-brand-dim">
                     {showAllDests ? "Show Less" : `Show All ${filteredDests.length} Destinations`} <ChevronRight className={`inline h-4 w-4 ml-1 transition-transform ${showAllDests ? "rotate-90" : ""}`} />
-                  </button>
+                  </motion.button>
                 </div>
               )}
             </>
@@ -673,12 +708,14 @@ export default function BookingSystem() {
             heading={<>Every Booking Protected<br />by <span className="text-brand">Recoup AI</span></>}
             subtext="Flight delayed? Hotel changed? Our AI recovers your entire itinerary automatically at zero hassle."
           >
-            <button
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => heroDest ? setPackageDest(heroDest) : heroRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-sm bg-brand text-brand-ink font-bold hover:brightness-105 shadow-sm"
+              className="btn-shine inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-brand-ink font-bold shadow-sm hover:shadow-md transition-shadow"
             >
-              Plan Your Protected Trip <ArrowRight className="h-4 w-4" />
-            </button>
+              <span className="relative z-[2] flex items-center gap-2">Plan Your Protected Trip <ArrowRight className="h-4 w-4" /></span>
+            </motion.button>
           </DarkPromoBanner>
         </div>
       </div>

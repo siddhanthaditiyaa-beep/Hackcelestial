@@ -21,27 +21,34 @@ export default function ResultCard({
   onReview,
   onBook,
 }) {
+  const glow = tint?.text ? `0 22px 44px -18px color-mix(in srgb, currentColor 60%, transparent)` : undefined;
+
   return (
     <motion.div
-      whileHover={{ y: -3 }}
-      transition={{ duration: 0.25 }}
-      className="bg-surface rounded-md border border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden group"
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`bg-surface rounded-lg border border-border shadow-sm hover:border-border-strong transition-colors overflow-hidden group ${tint?.text || ""}`}
     >
+      <div
+        className="hover:[box-shadow:var(--card-glow,var(--shadow-lift))] rounded-lg transition-shadow duration-300"
+        style={{ "--card-glow": glow }}
+      >
       <div className={`relative ${imageHeight} overflow-hidden`}>
         <img
           src={imageSrc}
           alt={imageAlt}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
         {badge && <div className="absolute top-3 left-3">{badge}</div>}
         <div className="absolute inset-x-0 bottom-0 p-3.5">{overlay}</div>
       </div>
 
-      <div className="px-4 py-3 flex items-center justify-between gap-3">
+      <div className="px-4 py-3.5 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          {priceLabel && <div className="text-[10px] text-ink-faint">{priceLabel}</div>}
-          <div className="font-display font-semibold text-lg text-ink leading-tight">{price}</div>
+          {priceLabel && <div className="text-[10px] text-ink-faint uppercase tracking-wide">{priceLabel}</div>}
+          <div className="font-display font-bold text-xl text-ink leading-tight tracking-tight">{price}</div>
           {ratingValue ? (
             <div className="flex items-center gap-1 text-status-risk text-xs mt-0.5">
               <Star className="h-3 w-3 fill-status-risk" />
@@ -55,19 +62,21 @@ export default function ResultCard({
           {onReview && (
             <button
               onClick={onReview}
-              className="px-3 py-1.5 rounded-sm border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition"
+              className="px-3 py-2 rounded-full border border-border text-xs font-semibold text-ink-dim hover:text-ink hover:bg-surface-sunk transition"
             >
               Reviews
             </button>
           )}
           <motion.button
+            whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.95 }}
             onClick={onBook}
-            className={`px-4 py-1.5 rounded-sm text-white text-xs font-bold hover:brightness-105 shadow-sm transition ${tint?.bg || "bg-brand"}`}
+            className="btn-shine px-4 py-2 rounded-full text-brand-ink text-xs font-bold shadow-sm transition-shadow hover:shadow-md"
           >
-            {ctaLabel}
+            <span className="relative z-[2]">{ctaLabel}</span>
           </motion.button>
         </div>
+      </div>
       </div>
     </motion.div>
   );

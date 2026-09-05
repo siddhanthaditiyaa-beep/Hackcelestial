@@ -20,8 +20,11 @@ export default function Header({ onOpenMyBookings, onLogout }) {
 
       <div className="relative max-w-[1240px] mx-auto px-4 md:px-8 py-6 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-sm bg-white/20 backdrop-blur flex items-center justify-center">
-            <span className="text-white font-display font-semibold text-base">R</span>
+          <div
+            className="h-9 w-9 rounded-full flex items-center justify-center shadow-md ring-1 ring-white/25"
+            style={{ background: "linear-gradient(135deg, var(--color-brand), var(--color-brand-2))" }}
+          >
+            <span className="text-brand-ink font-display font-semibold text-base">R</span>
           </div>
           <div>
             <span className="font-display font-medium text-white text-lg tracking-tight block leading-tight">
